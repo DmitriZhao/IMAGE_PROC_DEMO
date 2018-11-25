@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "FileReader.h"
+#include "Types.h"
 
 #pragma pack(push)
 #pragma pack(2)
@@ -48,7 +49,7 @@ public:
     BmpReader(FileReader* fileReader);
     uint32_t height (void);
     uint32_t width  (void);
-    uint8_t readByte (int x, int y);
+    Pixel readPixel (int x, int y);
 };
 
 #pragma pack(pop)

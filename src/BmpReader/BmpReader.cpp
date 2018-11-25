@@ -7,7 +7,8 @@
 //
 
 #include "BmpReader.h"
-
+#include "Types.h"
+#include <iostream>
 BmpReader::BmpReader(FileReader* fileReader){
     _fileReader = fileReader;
     
@@ -37,17 +38,23 @@ uint32_t BmpReader::width  (void){
 
 ////////////////////////////////////////
 
-uint8_t BmpReader::readByte (int x, int y)
+Pixel BmpReader::readPixel (int x, int y)
 {
-    uint16_t pixel;
+    Pixel px;
     uint8_t byte;
     uint32_t offset = _bitMapFileHeader.bfOffBits 
-                    + _bitMapInfoHeader.biWidth * (height() - 1 - y) * _bitMapInfoHeader.biBitCount / 8
-                    + x * _bitMapInfoHeader.biBitCount/8;
+                    + width() * (height() - 1 - y) * 3
+                    + x * 3;
     if (_fileReader->seek(offset))
     {
-        byte = _fileReader->read();
+        px.b = _fileReader->read();
+        px.g = _fileReader->read();
+        px.r = _fileReader->read();
     }
-    
-    return byte;
+    //std::cout<<std::dec<<x<<' '<<y<<' '<<std::hex<<offset<<':'<<(int)px.r<<(int)px.g<<(int)px.b<<' ';
+    if(!px.b)
+    {
+        std::cin.get();
+    }
+    return px;
 }

@@ -7,16 +7,15 @@
 class ImageAnalyzer
 {
 private:
-	UINT8 **_result;
-	GreyScaleImage*	_img;
-    Size _size;
-	std::vector<Point2D> _left;
-	std::vector<Point2D> _right;
-	std::vector<Point2D> _mid;
-    BOOL _bInImage(Point2D &p)    {return p.x()>=0 && p.x()<_size.x && p.y()>=0 && p.y()<_size.y;}
-	BOOL _bOnEdge (Point2D &p);
+	ImageBase<BYTE>* _result;
+	GreyScaleImage*	 _img;
+	std::vector<Point> _left;
+	std::vector<Point> _right;
+	std::vector<Point> _mid;
+    BOOL _bInImage(Point &p)    {return p.x>=0 && p.x<_img->size().x && p.y>=0 && p.y<_img->size().y;}
+	BOOL _bOnEdge (Point &p);
     BOOL _findRoot(COORD bottom);
-    void _dfs(Point2D &root, std::vector<Point2D> &edge);
+    void _dfs(Point &root, std::vector<Point> &edge);
 public:
 	explicit ImageAnalyzer(GreyScaleImage* img);
     void findPath();

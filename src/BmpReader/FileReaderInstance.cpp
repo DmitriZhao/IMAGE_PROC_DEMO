@@ -4,10 +4,10 @@
 //
 
 #include "FileReaderInstance.h"
-
 FileReaderInstance::FileReaderInstance(const char *filename) : FileReader(filename){
     
-    _file.open(filename);
+    _fileName = filename;
+    _file.open(_fileName);
 }
 
 uint8_t FileReaderInstance::read(){
@@ -26,9 +26,9 @@ int FileReaderInstance::available(){
 };
 
 bool FileReaderInstance::seek(uint32_t pos){
-    return (bool)_file.seekg(pos);
+    return (bool)_file.seekg(pos,std::ios::beg);
 };
 
 uint32_t FileReaderInstance::position(){
-    return _file.cur;
+    return std::ios::cur;
 };
