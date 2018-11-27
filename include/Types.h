@@ -81,14 +81,18 @@ typedef struct Vec2D
     }
     Vec2D operator * (const SIGNED_COORD& c)
     {
-        return Vec2D(c * this->x,c * this->y);
+        return Vec2D(c* this->x, c* this->y);
+    }
+    Vec2D operator / (const SIGNED_COORD& c)
+    {
+        return Vec2D(this->x/c, this->y/c);
     }    
 }Vec2D;
 
-const Vec2D UP    = Vec2D( 0,-2);
-const Vec2D DOWN  = Vec2D( 0, 2);
-const Vec2D LEFT  = Vec2D(-2, 0);
-const Vec2D RIGHT = Vec2D( 2, 0);
+const Vec2D UP    = Vec2D( 0,-1);
+const Vec2D DOWN  = Vec2D( 0, 1);
+const Vec2D LEFT  = Vec2D(-1, 0);
+const Vec2D RIGHT = Vec2D( 1, 0);
 
 
 

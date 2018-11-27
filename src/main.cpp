@@ -9,9 +9,9 @@
 
 using namespace std;
 
-int main()
+int main(int argc, char** argv)
 {
-    FileReaderInstance* fileReader = new FileReaderInstance("./res/0.BMP");
+    FileReaderInstance* fileReader = new FileReaderInstance(argv[1]);
     if(!fileReader->available())
     {
         cerr<<"BMP read failed, aborting"<<endl;
@@ -20,15 +20,15 @@ int main()
     BmpReader* bmpReader = new BmpReader(fileReader);   
 
     GreyScaleImage img(bmpReader);
-    img.show();
+    //img.show();
     img.evalThreshold(HEIGHT/2);
-    img.show();
+    //img.show();
     
     ImageAnalyzer imageAnalyzer(&img);
     imageAnalyzer.findPath();
     imageAnalyzer.show();
 
-    cin.get();
+    //cin.get();
     delete bmpReader;
     delete fileReader;
     return 0;
