@@ -17,6 +17,7 @@ typedef unsigned int        UINT32, *PUINT32;
 #if defined MT9V032
     typedef UINT8  COORD;
     typedef UINT16 ELEMENT;
+    typedef INT16  SIGNED_COORD;
 #endif
 
 #if defined MT9V032
@@ -50,16 +51,46 @@ typedef struct Pixel
     }
 }Pixel;
 
-typedef struct Point
+typedef struct Vec2D
 {
-    COORD   x;
-    COORD   y;
-    Point(COORD x = 0, COORD y = 0)
+    SIGNED_COORD   x;
+    SIGNED_COORD   y;
+    Vec2D(SIGNED_COORD x = 0, SIGNED_COORD y = 0)
     {
         this->x = x;
         this->y = y;
     }
-}Point;
+    Vec2D vertical(void)
+    {
+        if(0 == this->x)
+            return Vec2D(1,0);
+        else if(0 == this->y)
+            return Vec2D(0,1);
+        else
+            return Vec2D(0,0);
+    }
+    Vec2D& operator = (const Vec2D& vec)
+    {
+        this->x = vec.x;
+        this->y = vec.y;
+        return *this;
+    }
+    Vec2D operator + (const Vec2D& vec)
+    {
+        return Vec2D(this->x+vec.x, this->y+vec.y);
+    }
+    Vec2D operator * (const SIGNED_COORD& c)
+    {
+        return Vec2D(c * this->x,c * this->y);
+    }    
+}Vec2D;
+
+const Vec2D UP    = Vec2D( 0,-2);
+const Vec2D DOWN  = Vec2D( 0, 2);
+const Vec2D LEFT  = Vec2D(-2, 0);
+const Vec2D RIGHT = Vec2D( 2, 0);
+
+
 
 typedef struct Scalar
 {

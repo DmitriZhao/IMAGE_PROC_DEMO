@@ -9,16 +9,18 @@ class ImageAnalyzer
 private:
 	ImageBase<BYTE>* _result;
 	GreyScaleImage*	 _img;
-	std::vector<Point> _left;
-	std::vector<Point> _right;
-	std::vector<Point> _mid;
-    BOOL _bInImage(Point &p)    {return p.x>=0 && p.x<_img->size().x && p.y>=0 && p.y<_img->size().y;}
-	BOOL _bOnEdge (Point &p);
+	std::vector<Vec2D> _left;
+	std::vector<Vec2D> _right;
+	std::vector<Vec2D> _mid;
+    BOOL _bInImage(Vec2D &p)    {return p.x>=0 && p.x<_img->size().x && p.y>=0 && p.y<_img->size().y;}
+	BOOL _bOnEdge (Vec2D &p);
     BOOL _findRoot(COORD bottom);
-    void _dfs(Point &root, std::vector<Point> &edge);
+    void _dfs(Vec2D &root, std::vector<Vec2D> &edge, Vec2D direction);
+	ELEMENT _distanceSquared(Vec2D &a, Vec2D &b)	{return (ELEMENT)((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));}
+	BYTE _closestPoint(Vec2D &source, std::initializer_list<Vec2D> init_list);
 public:
 	explicit ImageAnalyzer(GreyScaleImage* img);
-    void findPath();
+    BOOL findPath();
 	void show();
 };
 
