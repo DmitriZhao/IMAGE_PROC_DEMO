@@ -26,9 +26,6 @@ BOOL ImageAnalyzer::findPath()
             Vec2D rightRoot = _right.back();
             _dfs(leftRoot, _left,UP);
             _dfs(rightRoot, _right,UP);
-            _dfs(_left.back(), _left,RIGHT);
-            _dfs(_right.back(), _right,RIGHT);
-
             //std::vector<Vec2D> left, right, leftTemp, rightTemp;;
             // for(auto left_iter = _left.begin(), right_iter = _right.begin();
             //     left_iter!=_left.end() && right_iter!=_right.end();
@@ -53,32 +50,41 @@ BOOL ImageAnalyzer::findPath()
         //     return false;
     }
 
-    std::vector<Vec2D>& shorterPath = (_right.size()<_left.size()) ? _right : _left;
-    std::vector<Vec2D>& longerPath = (_right.size()>_left.size()) ? _right : _left;
-    auto lastPoint = shorterPath.begin();
-    for(Vec2D source : longerPath)
-    {
-        _mid.push_back((source + *lastPoint) / 2);
+    Point leftInflection = _left.end() - 1;
+    Point rightInflection = _right.end() - 1;
 
-        if(shorterPath.end() != (lastPoint+2))
-        {
-            Vec2D first  = *(lastPoint);
-            Vec2D second = *(lastPoint+1);
-            Vec2D third  = *(lastPoint+2);
-            lastPoint += _closestPoint(source,{first,second,third});
-        }
+    for(Point pLeft = _left.begin(),    pRight = _right.begin();
+              pLeft < leftInflection && pRight < rightInflection;
+              pLeft++,                  pRight++)
+        _mid.push_back((*pLeft + *pRight)/2);
+
+    _dfs(*leftInflection, _left,RIGHT);
+    _dfs(*rightInflection, _right,RIGHT);
+
+    Path& shorterPath = (_left.size()<_right.size()) ? _left : _right;
+    Path& longerPath = (_left.size()>_left.size()) ? _left : _left;
+
+    Point lastPoint = (_left.size()<_right.size()) ? leftInflection : rightInflection;
+    Point source = (_left.size()>_right.size()) ? leftInflection : rightInflection;
+
+    for(; source != longerPath.end(); source++)
+    {
+        _mid.push_back((*source + *lastPoint) / 2);
+
+        if(lastPoint + 2 < shorterPath.end())
+            lastPoint = _closestPoint(source,{lastPoint,lastPoint+1,lastPoint+2});
         else
             break;
     }
 
-    for(Vec2D p : _left)
+    for(auto p : _left)
         _result->write(p.x,p.y,'L');
 
-    for(Vec2D p : _right)
+    for(auto p : _right)
         _result->write(p.x,p.y,'R');
         
-    //  for(Vec2D p : _mid)
-    //      _result->write(p.x,p.y,'M');
+    for(auto p : _mid)
+        _result->write(p.x,p.y,'M');
     return true;
 }
 
@@ -97,32 +103,32 @@ void ImageAnalyzer::show()
     std::cout << std::endl;
 }
 
-void ImageAnalyzer::_dfs(Vec2D &root, std::vector<Vec2D> &edge, Vec2D direction)
+void ImageAnalyzer::_dfs(Vec2D &root, Path &edge, Vec2D direction)
 {
-    std::vector<SIGNED_COORD> sequence = { 0,1,-1,2,-2,3,-3 };
+    std::vector<SIGNED_COORD> horizontalSearchingDistanceQueue = { 0,1,-1,2,-2,3,-3 };
     if(direction.x)
-        sequence =  { 0,1,-1,2,-2};
+        horizontalSearchingDistanceQueue =  { 0,1,-1,2,-2 };
     BOOL  continuous = 1;
     while(continuous)
     {
         continuous = 0;
-        for(SIGNED_COORD s : sequence)
+        for(SIGNED_COORD s : horizontalSearchingDistanceQueue)
         {
-            BOOL searchingDepth = 1;
+            BOOL searching = 1;
             for(SIGNED_COORD depth = 1; depth <= 2; depth++)
             {
-                //Vec2D p(root.x+(direction.y!=0)*sequence[i]+direction.x, root.y+(direction.x!=0)*sequence[i]+direction.y);
-                Vec2D p = root + direction * depth + direction.vertical() * s;
+                //Vec2D p(root.x+(direction.y!=0)*horizontal[i]+direction.x, root.y+(direction.x!=0)*horizontal[i]+direction.y);
+                Vec2D p = root + direction * depth + direction.horizontal() * s;
                 if(_bInImage(p) && _img->read(p.x,p.y) > _img->threshold() && _bOnEdge(p))
                 {
                     edge.push_back(p);
                     root = p;
                     continuous = 1;
-                    searchingDepth = 0;
+                    searching = 0;
                     break;
                 }
             }
-            if(!searchingDepth)
+            if(!searching)
                 break;
         }
     }
@@ -198,22 +204,19 @@ BOOL ImageAnalyzer::_bOnEdge(Vec2D &p)
 	return false;
 }
 
-BYTE ImageAnalyzer::_closestPoint(Vec2D &source, std::initializer_list<Vec2D> init_list)
+Point ImageAnalyzer::_closestPoint(Point &source, std::initializer_list<Point> init_list)
 {
-    auto tempPoint = init_list.begin();
-    Vec2D tempPointValue = *tempPoint;
-    ELEMENT tempDistance = _distanceSquared(source, tempPointValue);
+    Point tempPoint;
+    ELEMENT tempDistance = ELEMENT(-1); //MAXIUM of unsigned int
     
-    for(auto i = init_list.begin()+1; i!=init_list.end(); i++)
+    for(Point currentPoint : init_list)
     {
-        auto currentPoint = i;
-        Vec2D currentPointValue = *currentPoint;
-        ELEMENT currentDistance = _distanceSquared(source,currentPointValue);
+        ELEMENT currentDistance = _distanceSquared(*source,*currentPoint);
         if(currentDistance < tempDistance)
         {
             tempDistance = currentDistance;
             tempPoint = currentPoint;
         }
     }
-    return tempPoint-init_list.begin();
+    return tempPoint;
 }

@@ -1,6 +1,8 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#include <vector>
+
 #define MT9V032
 
 typedef bool                BOOL, *PBOOL;
@@ -15,9 +17,9 @@ typedef unsigned int        UINT32, *PUINT32;
 
 
 #if defined MT9V032
-    typedef UINT8  COORD;
-    typedef UINT16 ELEMENT;
-    typedef INT16  SIGNED_COORD;
+    typedef UINT8  COORD;           //图像坐标系
+    typedef UINT16 ELEMENT;         //面积元
+    typedef INT16  SIGNED_COORD;    //带符号坐标
 #endif
 
 #if defined MT9V032
@@ -38,7 +40,7 @@ typedef struct Size
     }
 }Size;
 
-typedef struct Pixel
+typedef struct Pixel        //RGB888
 {
     BYTE   b;
     BYTE   g;
@@ -51,7 +53,7 @@ typedef struct Pixel
     }
 }Pixel;
 
-typedef struct Vec2D
+typedef struct Vec2D        //二维向量
 {
     SIGNED_COORD   x;
     SIGNED_COORD   y;
@@ -60,7 +62,7 @@ typedef struct Vec2D
         this->x = x;
         this->y = y;
     }
-    Vec2D vertical(void)
+    Vec2D horizontal(void)
     {
         if(0 == this->x)
             return Vec2D(1,0);
@@ -94,12 +96,19 @@ const Vec2D DOWN  = Vec2D( 0, 1);
 const Vec2D LEFT  = Vec2D(-1, 0);
 const Vec2D RIGHT = Vec2D( 1, 0);
 
-
+typedef std::vector<Vec2D> Path;    //路径
+typedef Path::iterator Point;       //路径上的点(因此是指针，解引用得到位置向量)
 
 typedef struct Scalar
 {
     BYTE value;
     Scalar(BYTE value = 0) {this->value = value;}
 }Scalar;
+
+class Line
+{
+private:
+    //TODO
+};
 
 #endif
