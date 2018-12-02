@@ -20,11 +20,11 @@ BOOL ImageAnalyzer::findPath()
     COORD row = 1;
     for(COORD row = 0; row < _img->size().y; row++)
     {
-        if(_findRoot(_img->size().y - row - 1))
+        if(_findRoot(_img->size().y - row - 1))     //write roots into _left & _right if successful
         {
             Vec2D leftRoot = _left.back();
             Vec2D rightRoot = _right.back();
-            _dfs(leftRoot, _left,UP);
+            _dfs(leftRoot, _left,UP);               //extend _left and _right in straight lane if successful
             _dfs(rightRoot, _right,UP);
             //std::vector<Vec2D> left, right, leftTemp, rightTemp;;
             // for(auto left_iter = _left.begin(), right_iter = _right.begin();
@@ -50,22 +50,24 @@ BOOL ImageAnalyzer::findPath()
         //     return false;
     }
 
-    Point leftInflection = _left.end() - 1;
-    Point rightInflection = _right.end() - 1;
-
-    for(Point pLeft = _left.begin(),    pRight = _right.begin();
-              pLeft < leftInflection && pRight < rightInflection;
-              pLeft++,                  pRight++)
+    //find midpoint on straight lane
+    Point pLeft = _left.begin(), pRight = _right.begin();
+    for(; pLeft < _left.end() && pRight < _right.end();
+          pLeft++,               pRight++)
         _mid.push_back((*pLeft + *pRight)/2);
 
-    _dfs(*leftInflection, _left,RIGHT);
-    _dfs(*rightInflection, _right,RIGHT);
+    COORD leftInflectionOffset = pLeft - _left.begin();      //record inflection points
+    COORD rightInflectionOffset = pRight - _right.begin();
 
     Path& shorterPath = (_left.size()<_right.size()) ? _left : _right;
-    Path& longerPath = (_left.size()>_left.size()) ? _left : _left;
+    Path& longerPath  = (_left.size()>_right.size()) ? _left : _right;
 
-    Point lastPoint = (_left.size()<_right.size()) ? leftInflection : rightInflection;
-    Point source = (_left.size()>_right.size()) ? leftInflection : rightInflection;
+    _dfs(_left.back(), _left, RIGHT);       //extend _left and _right in curved lane if successful
+    _dfs(_right.back(), _right, RIGHT);
+
+    //find midpoint on curved lane
+    Point lastPoint = (_left.size()<_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);
+    Point source    = (_left.size()>_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);;
 
     for(; source != longerPath.end(); source++)
     {
@@ -85,6 +87,9 @@ BOOL ImageAnalyzer::findPath()
         
     for(auto p : _mid)
         _result->write(p.x,p.y,'M');
+
+    _result->write(_left.at(leftInflectionOffset).x,_left.at(leftInflectionOffset).y,'X');
+    _result->write(_right.at(rightInflectionOffset).x,_right.at(rightInflectionOffset).y,'Y');
     return true;
 }
 

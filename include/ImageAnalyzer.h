@@ -19,6 +19,7 @@ private:
 	Point _closestPoint(Point &source, std::initializer_list<Point> init_list);
 public:
 	explicit ImageAnalyzer(GreyScaleImage* img);
+	~ImageAnalyzer()	{delete _result;}
     BOOL findPath();
 	void show();
 };

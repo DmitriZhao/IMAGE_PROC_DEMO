@@ -97,7 +97,7 @@ const Vec2D LEFT  = Vec2D(-1, 0);
 const Vec2D RIGHT = Vec2D( 1, 0);
 
 typedef std::vector<Vec2D> Path;    //路径
-typedef Path::iterator Point;       //路径上的点(因此是指针，解引用得到位置向量)
+typedef Path::iterator Point;       //路径上的点(因此是(迭)指(代)针(器)，解引用得到位置向量)
 
 typedef struct Scalar
 {
