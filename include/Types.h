@@ -1,6 +1,8 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#include <vector>
+
 #define MT9V032
 
 typedef bool                BOOL, *PBOOL;
@@ -15,8 +17,9 @@ typedef unsigned int        UINT32, *PUINT32;
 
 
 #if defined MT9V032
-    typedef UINT8  COORD;
-    typedef UINT16 ELEMENT;
+    typedef UINT8  COORD;           //图像坐标系
+    typedef UINT16 ELEMENT;         //面积元
+    typedef INT16  SIGNED_COORD;    //带符号坐标
 #endif
 
 #if defined MT9V032
@@ -37,7 +40,7 @@ typedef struct Size
     }
 }Size;
 
-typedef struct Pixel
+typedef struct Pixel        //RGB888
 {
     BYTE   b;
     BYTE   g;
@@ -50,21 +53,62 @@ typedef struct Pixel
     }
 }Pixel;
 
-typedef struct Point
+typedef struct Vec2D        //二维向量
 {
-    COORD   x;
-    COORD   y;
-    Point(COORD x = 0, COORD y = 0)
+    SIGNED_COORD   x;
+    SIGNED_COORD   y;
+    Vec2D(SIGNED_COORD x = 0, SIGNED_COORD y = 0)
     {
         this->x = x;
         this->y = y;
     }
-}Point;
+    Vec2D horizontal(void)
+    {
+        if(0 == this->x)
+            return Vec2D(1,0);
+        else if(0 == this->y)
+            return Vec2D(0,1);
+        else
+            return Vec2D(0,0);
+    }
+    Vec2D& operator = (const Vec2D& vec)
+    {
+        this->x = vec.x;
+        this->y = vec.y;
+        return *this;
+    }
+    Vec2D operator + (const Vec2D& vec)
+    {
+        return Vec2D(this->x+vec.x, this->y+vec.y);
+    }
+    Vec2D operator * (const SIGNED_COORD& c)
+    {
+        return Vec2D(c* this->x, c* this->y);
+    }
+    Vec2D operator / (const SIGNED_COORD& c)
+    {
+        return Vec2D(this->x/c, this->y/c);
+    }    
+}Vec2D;
+
+const Vec2D UP    = Vec2D( 0,-1);
+const Vec2D DOWN  = Vec2D( 0, 1);
+const Vec2D LEFT  = Vec2D(-1, 0);
+const Vec2D RIGHT = Vec2D( 1, 0);
+
+typedef std::vector<Vec2D> Path;    //路径
+typedef Path::iterator Point;       //路径上的点(因此是(迭)指(代)针(器)，解引用得到位置向量)
 
 typedef struct Scalar
 {
     BYTE value;
     Scalar(BYTE value = 0) {this->value = value;}
 }Scalar;
+
+class Line
+{
+private:
+    //TODO
+};
 
 #endif

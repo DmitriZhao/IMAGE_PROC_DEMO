@@ -46,7 +46,7 @@ class BmpReader {
     BitMapFileHeader _bitMapFileHeader;
     BitMapInfoHeader _bitMapInfoHeader;
 public:
-    BmpReader(FileReader* fileReader);
+    explicit BmpReader(FileReader* fileReader);
     uint32_t height (void);
     uint32_t width  (void);
     Pixel readPixel (int x, int y);

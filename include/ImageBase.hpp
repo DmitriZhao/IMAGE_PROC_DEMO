@@ -1,5 +1,4 @@
 #include "Types.h"
-#include <vector>
 
 template <typename T>
 class ImageBase
