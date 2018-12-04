@@ -62,8 +62,8 @@ BOOL ImageAnalyzer::findPath()
     Path& shorterPath = (_left.size()<_right.size()) ? _left : _right;
     Path& longerPath  = (_left.size()>_right.size()) ? _left : _right;
 
-    _dfs(_left.back(), _left, RIGHT);       //extend _left and _right in curved lane if successful
-    _dfs(_right.back(), _right, RIGHT);
+    _dfs(_left.back(), _left, LEFT);       //extend _left and _right in curved lane if successful
+    _dfs(_right.back(), _right, LEFT);
 
     //find midpoint on curved lane
     Point lastPoint = (_left.size()<_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);
@@ -145,7 +145,8 @@ BOOL ImageAnalyzer::_findRoot(COORD bottom)
     _right.clear();
     for (COORD x = 0; x < _img->size().x; x++)
     {
-        if (_img->read(x,bottom) > _img->threshold())
+        BYTE val = _img->read(x,bottom);
+        if (val > _img->threshold())
         {
             if (   _img->read(x+1,bottom) > _img->threshold() 
                 && _img->read(x-1,bottom) < _img->threshold())
@@ -203,7 +204,7 @@ BOOL ImageAnalyzer::_bOnEdge(Vec2D &p)
                 + (_img->read(p.x-1,p.y  ) > _img->threshold())
                 + (_img->read(p.x-1,p.y+1) > _img->threshold())
                 + (_img->read(p.x-1,p.y-1) > _img->threshold());
-		if (counter <= 7)
+		if (counter <= 6)
 			return true;
 	}
 	return false;

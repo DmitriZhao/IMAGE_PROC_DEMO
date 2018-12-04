@@ -27,4 +27,13 @@ public:
 //    virtual void close();
 };
 
+inline FileReader::FileReader(const char *filename)
+{
+    _fileName = filename;
+};
+
+inline const char* FileReader::filename(){
+    return _fileName;
+}
+
 #endif /* defined(__bmp__FileReader__) */

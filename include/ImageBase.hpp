@@ -14,7 +14,7 @@ public:
 };
 
 template <typename T>
-ImageBase<T>::ImageBase(Size size, T defaultVal)
+inline ImageBase<T>::ImageBase(Size size, T defaultVal)
 {
     _size = size;
     for(ELEMENT i=0; i<_size.area(); i++)

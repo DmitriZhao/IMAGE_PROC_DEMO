@@ -2,7 +2,7 @@
 #define _GREYSCALEIMAGE_H
 
 #include "Types.h"
-#include "BmpReader.h"
+#include "BmpReader.hpp"
 #include "ImageBase.hpp"
 
 class BmpReader;

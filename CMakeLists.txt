@@ -13,16 +13,8 @@ set(CMAKE_RELEASE_POSTFIX "_r")
 set_target_properties(${TARGET_NAME} PROPERTIES DEBUG_POSTFIX "_d")
 set_target_properties(${TARGET_NAME} PROPERTIES RELEASE_POSTFIX "_r")
 
-include(CTest)
-enable_testing()
-
 include_directories(${PROJECT_SOURCE_DIR}/include)
 include_directories(${PROJECT_SOURCE_DIR}/include/BmpReader)
 
 aux_source_directory(${PROJECT_SOURCE_DIR}/src SOURCE_LIST)
-aux_source_directory(${PROJECT_SOURCE_DIR}/src/BmpReader SOURCE_LIST)
 add_executable(Image_Proc_Demo ${SOURCE_LIST})
-
-include(CPack)
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
