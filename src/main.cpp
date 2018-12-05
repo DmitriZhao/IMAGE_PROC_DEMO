@@ -11,27 +11,24 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    FileReaderInstance* fileReader = new FileReaderInstance(argv[1]);
+    FileReaderInstance::Ptr fileReader(new FileReaderInstance(argv[1]));
     if(!fileReader->available())
     {
         cerr<<"BMP read failed, aborting"<<endl;
         return 1;
     }
-    BmpReader* bmpReader = new BmpReader(fileReader);   
+    BmpReader::Ptr bmpReader(new BmpReader(fileReader));
 
-    GreyScaleImage* img = new GreyScaleImage(bmpReader);
+    GreyScaleImage::Ptr img(new GreyScaleImage(bmpReader));
     //img->show();
     img->evalThreshold(HEIGHT/2);
     //img->show();
     
-    ImageAnalyzer* imageAnalyzer = new ImageAnalyzer(img);
+    ImageAnalyzer::Ptr imageAnalyzer(new ImageAnalyzer(img));
     imageAnalyzer->findPath();
     imageAnalyzer->show();
 
     //cin.get();
-    delete imageAnalyzer;
-    delete img;
-    delete bmpReader;
-    delete fileReader;
+
     return 0;
 }

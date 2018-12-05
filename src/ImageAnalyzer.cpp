@@ -4,10 +4,10 @@
 #include "GreyScaleImage.h"
 #include "ImageAnalyzer.h"
 
-ImageAnalyzer::ImageAnalyzer(GreyScaleImage *img)
+ImageAnalyzer::ImageAnalyzer(GreyScaleImage::Ptr img)
 {
     _img = img;
-    _result = new ImageBase<BYTE>(_img->size(),' ');
+    _result = std::make_shared<ImageBase<BYTE>>(_img->size(),' ');
     for(COORD x = 0; x < _img->size().x; x++)
     {
         for(COORD y = 0; y < _img->size().y; y++)

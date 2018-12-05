@@ -3,11 +3,11 @@
 #include "Types.h"
 #include "GreyScaleImage.h"
 
-class ImageAnalyzer
+class ImageAnalyzer : public std::enable_shared_from_this<ImageAnalyzer>
 {
 private:
-	ImageBase<BYTE>* _result;
-	GreyScaleImage*	 _img;
+	ImageBase<BYTE>::Ptr _result;
+	GreyScaleImage::Ptr	 _img;
 	Path _left;
 	Path _right;
 	Path _mid;
@@ -18,10 +18,11 @@ private:
 	ELEMENT _distanceSquared(Vec2D &a, Vec2D &b)	{return (ELEMENT)((a.x-b.x)*(a.x-b.x)+(a.y-b.y)*(a.y-b.y));}
 	Point _closestPoint(Point &source, std::initializer_list<Point> init_list);
 public:
-	explicit ImageAnalyzer(GreyScaleImage* img);
-	~ImageAnalyzer()	{delete _result;}
-    BOOL findPath();
-	void show();
+	explicit ImageAnalyzer(GreyScaleImage::Ptr img);
+    typedef  std::shared_ptr<ImageAnalyzer>    Ptr;
+	Ptr      getPtr()  {return shared_from_this();}
+    BOOL	 findPath();
+	void 	 show();
 };
 
 #endif // !_IMAGE_ANALYZER_H

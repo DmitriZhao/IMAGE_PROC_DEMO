@@ -9,10 +9,10 @@
 #ifndef __bmp__FileReader__
 #define __bmp__FileReader__
 
-#include <stdio.h>
-#include <stdint.h>
+#include <memory>
 
-class FileReader {
+class FileReader : public std::enable_shared_from_this<FileReader>
+{
 protected:
     const char* _fileName;
 public:
@@ -23,17 +23,25 @@ public:
     virtual int available() = 0;
     virtual bool seek(uint32_t pos) = 0;
     virtual uint32_t position() = 0;
-//    virtual uint32_t size();
-//    virtual void close();
+//  virtual uint32_t size();
+//  virtual void close();
+    typedef std::shared_ptr<FileReader> Ptr;
+    Ptr     getPtr();
 };
 
 inline FileReader::FileReader(const char *filename)
 {
     _fileName = filename;
-};
+}
 
-inline const char* FileReader::filename(){
+inline const char* FileReader::filename()
+{
     return _fileName;
+}
+
+inline FileReader::Ptr FileReader::getPtr()
+{
+    return shared_from_this();
 }
 
 #endif /* defined(__bmp__FileReader__) */

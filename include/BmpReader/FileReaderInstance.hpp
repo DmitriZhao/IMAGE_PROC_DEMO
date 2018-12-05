@@ -8,13 +8,14 @@
 
 #include "FileReader.hpp"
 #include <fstream>
+#include <memory>
 
-class FileReaderInstance : public  FileReader{
+class FileReaderInstance : public FileReader
+{
 private:
-    std::ifstream*   _file;
+    std::unique_ptr<std::ifstream>   _file;
 public:
     explicit FileReaderInstance(const char *filename);
-    ~FileReaderInstance() {delete _file;}
     uint8_t read();
     uint8_t peek();
     int available();
@@ -22,34 +23,40 @@ public:
     uint32_t position();
 };
 
-inline FileReaderInstance::FileReaderInstance(const char *filename) : FileReader(filename){
+inline FileReaderInstance::FileReaderInstance(const char *filename) : FileReader(filename)
+{
     
     _fileName = filename;
-    _file = new std::ifstream(_fileName, std::ios::in | std::ios::binary);
+    _file = std::make_unique<std::ifstream>(_fileName, std::ios::in | std::ios::binary);
 }
 
-inline uint8_t FileReaderInstance::read(){
+inline uint8_t FileReaderInstance::read()
+{
     uint8_t byteData;
     *_file >> byteData;
     return byteData;
 };
 
-inline uint8_t FileReaderInstance::peek(){
+inline uint8_t FileReaderInstance::peek()
+{
     uint8_t byteData = _file->peek();
     return byteData;
 };
 
-inline int FileReaderInstance::available(){
+inline int FileReaderInstance::available()
+{
     return _file->is_open();
 };
 
-inline bool FileReaderInstance::seek(uint32_t pos){
+inline bool FileReaderInstance::seek(uint32_t pos)
+{
     _file->clear();
     _file->seekg(0,std::ios::beg);
     return (bool)_file->seekg(pos,std::ios::beg);
 };
 
-inline uint32_t FileReaderInstance::position(){
+inline uint32_t FileReaderInstance::position()
+{
     return std::ios::cur;
 };
 

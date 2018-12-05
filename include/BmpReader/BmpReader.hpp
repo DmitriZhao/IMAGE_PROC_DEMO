@@ -9,8 +9,7 @@
 #ifndef __bmp__BmpReader__
 #define __bmp__BmpReader__
 
-#include <stdio.h>
-#include <stdint.h>
+#include <memory>
 #include "FileReader.hpp"
 #include "Types.h"
 
@@ -41,43 +40,54 @@ typedef struct
     uint32_t   biClrImportant;
 } BitMapInfoHeader;
 
-class BmpReader {
-    FileReader* _fileReader;
-    BitMapFileHeader _bitMapFileHeader;
-    BitMapInfoHeader _bitMapInfoHeader;
+class BmpReader : public std::enable_shared_from_this<BmpReader>
+{
+    FileReader::Ptr     _fileReader;
+    BitMapFileHeader    _bitMapFileHeader;
+    BitMapInfoHeader    _bitMapInfoHeader;
 public:
-    explicit BmpReader(FileReader* fileReader);
+    explicit BmpReader(FileReader::Ptr fileReader);
+    typedef  std::shared_ptr<BmpReader> Ptr;
+    Ptr      getPtr();
     uint32_t height (void);
     uint32_t width  (void);
-    Pixel readPixel (int x, int y);
+    Pixel    readPixel (int x, int y);
 };
 #pragma pack(pop)
 
-inline BmpReader::BmpReader(FileReader* fileReader){
+inline BmpReader::BmpReader(FileReader::Ptr fileReader){
     _fileReader = fileReader;
     
     uint8_t* ptrBitMapFileHeader = (uint8_t*)&_bitMapFileHeader;
     int bitMapHeaderSize = sizeof(BitMapFileHeader);
     _fileReader->seek(0);
-    for (int currentByte = 0; currentByte < bitMapHeaderSize; currentByte++) {
+    for (int currentByte = 0; currentByte < bitMapHeaderSize; currentByte++)
+    {
         ptrBitMapFileHeader[currentByte] = _fileReader->read();
     }
     
     uint8_t* ptrBitMapInfoFileHeader = (uint8_t*)&_bitMapInfoHeader;
     int bitMapInfoFileHeaderSize = sizeof(BitMapInfoHeader);
 //    _fileReader->seek(bitMapHeaderSize);
-    for (int currentByte = 0; currentByte < bitMapInfoFileHeaderSize; currentByte++) {
+    for (int currentByte = 0; currentByte < bitMapInfoFileHeaderSize; currentByte++)
+    {
         ptrBitMapInfoFileHeader[currentByte] = _fileReader->read();
     }
 }
 
-
-inline uint32_t BmpReader::height (void){
+inline uint32_t BmpReader::height (void)
+{
     return _bitMapInfoHeader.biHeight;
 }
 
-inline uint32_t BmpReader::width  (void){
+inline uint32_t BmpReader::width  (void)
+{
     return _bitMapInfoHeader.biWidth;
+}
+
+inline BmpReader::Ptr BmpReader::getPtr()
+{   
+    return shared_from_this();
 }
 
 ////////////////////////////////////////

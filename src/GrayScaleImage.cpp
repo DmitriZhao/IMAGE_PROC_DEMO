@@ -1,11 +1,11 @@
 #include <iostream>
 #include "GreyScaleImage.h"
 
-GreyScaleImage::GreyScaleImage(BmpReader* bmpReader)
+GreyScaleImage::GreyScaleImage(BmpReader::Ptr bmpReader)
 {
 	Size size(bmpReader->width(),bmpReader->height());
 
-	_img = new ImageBase<Scalar>(size, Scalar(0xFF));
+	_img = std::make_shared<ImageBase<Scalar>>(size, Scalar(0xFF));
 
 	for (COORD y = 0; y < size.y; y++)
 	{
@@ -18,7 +18,7 @@ GreyScaleImage::GreyScaleImage(BmpReader* bmpReader)
 	}
 	    
 }
-
+  
 void GreyScaleImage::show()
 {
 	for (COORD y = 0; y < size().y; y++)
