@@ -15,11 +15,17 @@ int main(int argc, char** argv)
     ImageAnalyzer imgAnalyzer = ImageAnalyzer(imgReader.getImage());
     imgAnalyzer.evalThreshold(HEIGHT/2);
 
-    for(COORD x = 1; x < imgReader.size().x-1; x++)
-        for(COORD y = 1; y < imgReader.size().y-1; y++)
-            imgAnalyzer.applyOperator(x, y, ImageAnalyzer::SOBEL);
+    GreyScaleImage::Ptr gradImg_sobel  = imgAnalyzer.getGradMap(ImageAnalyzer::SOBEL);
+    GreyScaleImage::Ptr gradImg_scharr = imgAnalyzer.getGradMap(ImageAnalyzer::SCHARR);
 
-    imgAnalyzer.showGradMap(byThreshold);
+    ImageAnalyzer gradAnalyzer_sobel(gradImg_sobel);
+    ImageAnalyzer gradAnalyzer_scharr(gradImg_scharr);
+    
+    gradAnalyzer_sobel.evalThreshold(HEIGHT/2);
+    gradAnalyzer_scharr.evalThreshold(HEIGHT/2);
+
+    gradImg_sobel->show(byThreshold);
+    gradImg_scharr->show(byThreshold);
 
     LaneAnalyzer laneAnalyzer = LaneAnalyzer(imgReader.getImage());
     laneAnalyzer.findPath();

@@ -17,6 +17,7 @@ public:
     Size         size  () const                     {return _size;}
     T            read  (COORD x, COORD y) const     {return _data.at(y*_size.x + x);}
     void         write (COORD x, COORD y, T value)  {_data.at(y*_size.x + x) = value;}
+    void         clear();
 };
 
 template <typename T>
@@ -33,4 +34,10 @@ inline ImageBase<T>::ImageBase(const Size& size, std::initializer_list<T> list)
     _data.reserve(_size.area());
     for(auto i : list)
         _data.push_back(i);
+}
+
+template <typename T>
+inline void ImageBase<T>::clear()
+{
+    _data.resize(_size.area(),0);
 }

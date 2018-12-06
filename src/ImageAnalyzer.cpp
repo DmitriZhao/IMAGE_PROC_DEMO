@@ -6,15 +6,14 @@
 ImageAnalyzer::ImageAnalyzer(GreyScaleImage::Ptr img)
 {
     _img = img;
-    _gradMap = std::make_shared<GreyScaleImage>(_img->size(),0);
 }
 
-void ImageAnalyzer::applyOperator(COORD x, COORD y, const Operator& op)
+BYTE ImageAnalyzer::applyOperator(COORD x, COORD y, const Operator& op)
 {
 	if(x<1 || x>_img->size().x-2 || y<1 || y>_img->size().y-2)
 	{
 		std::cerr << "out_of_range error"<<std::endl;
-		return;
+		return 0;
 	}
 	INT16 Gx = 0, Gy = 0;
 	for(COORD i=0; i<3; i++)
@@ -25,29 +24,18 @@ void ImageAnalyzer::applyOperator(COORD x, COORD y, const Operator& op)
 			Gy += _img->read(x-1+i, y-1+j) * op.y.read(i,j);
 		}
 	}
-	_gradMap->write(x, y ,(COORD)sqrt(Gx*Gx+Gy*Gy));
+	return (COORD)sqrt(Gx*Gx+Gy*Gy);
 }
 
-void ImageAnalyzer::showGradMap(ShowMethod method)
+GreyScaleImage::Ptr ImageAnalyzer::getGradMap(const ImageAnalyzer::Operator& op)
 {
-	for (COORD y = 0; y < _gradMap->size().y; y++)
-	{
-		for (COORD x = 0; x < _gradMap->size().x; x++)
-		{
-			BYTE byte = _gradMap->read(x, y);
-			if(byThreshold == method)
-			{
-				if (byte < _threshold)
-					std::cout << ' ';
-				else
-					std::cout << '*';
-			}
-			else if(byHex == method)
-				std::cout<<std::hex<<(INT8)byte<<' ';
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;
+	GreyScaleImage::Ptr gradImage = std::make_shared<GreyScaleImage>(_img->size(),0);
+
+	for(COORD x = 1; x < gradImage->size().x-1; x++)
+        for(COORD y = 1; y < gradImage->size().y-1; y++)
+            gradImage->write(x, y, applyOperator(x, y, op));
+
+	return gradImage->getPtr();
 }
 
 BYTE ImageAnalyzer::_otsu(const COORD topBoundary)

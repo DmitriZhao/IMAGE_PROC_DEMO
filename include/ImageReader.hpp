@@ -23,10 +23,11 @@ inline BOOL ImageReader::init(const char* fileName)
     if(!_fileReader->available())
     {
         std::cerr<<"BMP read failed, aborting"<<std::endl;
-        return 1;
+        return false;
     }
     _bmpReader = std::make_shared<BmpReader>(_fileReader);
     _image = std::make_shared<GreyScaleImage>(_bmpReader);
+    return true;
 }
 
 inline Size ImageReader::size() const
