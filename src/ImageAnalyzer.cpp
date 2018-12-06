@@ -1,228 +1,129 @@
+#include <cmath>
+#include <memory>
 #include <iostream>
-#include <algorithm>
-#include "Types.h"
-#include "GreyScaleImage.h"
 #include "ImageAnalyzer.h"
 
 ImageAnalyzer::ImageAnalyzer(GreyScaleImage::Ptr img)
 {
     _img = img;
-    _result = std::make_shared<ImageBase<BYTE>>(_img->size(),' ');
-    for(COORD x = 0; x < _img->size().x; x++)
-    {
-        for(COORD y = 0; y < _img->size().y; y++)
-            _result->write(x,y,_img->read(x,y)>_img->threshold()?' ':'*');
-    }
+    _gradMap = std::make_shared<GreyScaleImage>(_img->size(),0);
 }
 
-BOOL ImageAnalyzer::findPath()
+void ImageAnalyzer::applyOperator(COORD x, COORD y, const Operator& op)
 {
-    COORD row = 1;
-    for(COORD row = 0; row < _img->size().y; row++)
-    {
-        if(_findRoot(_img->size().y - row - 1))     //write roots into _left & _right if successful
-        {
-            Vec2D leftRoot = _left.back();
-            Vec2D rightRoot = _right.back();
-            _dfs(leftRoot, _left,UP);               //extend _left and _right in straight lane if successful
-            _dfs(rightRoot, _right,UP);
-            //std::vector<Vec2D> left, right, leftTemp, rightTemp;;
-            // for(auto left_iter = _left.begin(), right_iter = _right.begin();
-            //     left_iter!=_left.end() && right_iter!=_right.end();
-            //     left_iter++, right_iter++)
-            // {
-            //     Vec2D leftRoot = *left_iter;
-            //     Vec2D rightRoot = *right_iter;
-            //     leftTemp.clear();
-            //     rightTemp.clear();
-            //     _dfs(leftRoot, leftTemp,UP);
-            //     _dfs(rightRoot, rightTemp,UP);
-            //     if(leftTemp.size()>left.size())
-            //         left = leftTemp;
-            //     if(rightTemp.size()>right.size())
-            //         right = rightTemp;
-            // }
-            // _left.insert(_left.end(),leftTemp.begin(),leftTemp.end());
-            // _right.insert(_right.end(),rightTemp.begin(),rightTemp.end());
-            break;
-        }
-        // if(row > _img->size().y * 2 / 3)
-        //     return false;
-    }
-
-    //find midpoint on straight lane
-    Point pLeft = _left.begin(), pRight = _right.begin();
-    for(; pLeft < _left.end() && pRight < _right.end();
-          pLeft++,               pRight++)
-        _mid.push_back((*pLeft + *pRight)/2);
-
-    COORD leftInflectionOffset = pLeft - _left.begin();      //record inflection points
-    COORD rightInflectionOffset = pRight - _right.begin();
-
-    Path& shorterPath = (_left.size()<_right.size()) ? _left : _right;
-    Path& longerPath  = (_left.size()>_right.size()) ? _left : _right;
-
-    _dfs(_left.back(), _left, LEFT);       //extend _left and _right in curved lane if successful
-    _dfs(_right.back(), _right, LEFT);
-
-    //find midpoint on curved lane
-    Point lastPoint = (_left.size()<_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);
-    Point source    = (_left.size()>_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);;
-
-    for(; source != longerPath.end(); source++)
-    {
-        _mid.push_back((*source + *lastPoint) / 2);
-
-        if(lastPoint + 2 < shorterPath.end())
-            lastPoint = _closestPoint(source,{lastPoint,lastPoint+1,lastPoint+2});
-        else
-            break;
-    }
-
-    for(auto p : _left)
-        _result->write(p.x,p.y,'L');
-
-    for(auto p : _right)
-        _result->write(p.x,p.y,'R');
-        
-    for(auto p : _mid)
-        _result->write(p.x,p.y,'M');
-
-    _result->write(_left.at(leftInflectionOffset).x,_left.at(leftInflectionOffset).y,'X');
-    _result->write(_right.at(rightInflectionOffset).x,_right.at(rightInflectionOffset).y,'Y');
-    return true;
-}
-
-void ImageAnalyzer::show()
-{
-    for (int y = 0; y < _img->size().y; y++)
+	if(x<1 || x>_img->size().x-2 || y<1 || y>_img->size().y-2)
 	{
-		for (int x = 0; x < _img->size().x; x++)
+		std::cerr << "out_of_range error"<<std::endl;
+		return;
+	}
+	INT16 Gx = 0, Gy = 0;
+	for(COORD i=0; i<3; i++)
+	{
+		for(COORD j=0; j<3; j++)
 		{
-            // if(!_result->read(x,y))
-            //     std::cout<<' ';
-			std::cout << _result->read(x,y);
+			Gx += _img->read(x-1+i, y-1+j) * op.x.read(i,j);
+			Gy += _img->read(x-1+i, y-1+j) * op.y.read(i,j);
+		}
+	}
+	_gradMap->write(x, y ,(COORD)sqrt(Gx*Gx+Gy*Gy));
+}
+
+void ImageAnalyzer::showGradMap(ShowMethod method)
+{
+	for (COORD y = 0; y < _gradMap->size().y; y++)
+	{
+		for (COORD x = 0; x < _gradMap->size().x; x++)
+		{
+			BYTE byte = _gradMap->read(x, y);
+			if(byThreshold == method)
+			{
+				if (byte < _threshold)
+					std::cout << ' ';
+				else
+					std::cout << '*';
+			}
+			else if(byHex == method)
+				std::cout<<std::hex<<(INT8)byte<<' ';
 		}
 		std::cout << std::endl;
 	}
-    std::cout << std::endl;
+	std::cout << std::endl;
 }
 
-void ImageAnalyzer::_dfs(Vec2D &root, Path &edge, Vec2D direction)
+BYTE ImageAnalyzer::_otsu(const COORD topBoundary)
 {
-    std::vector<SIGNED_COORD> horizontalSearchingDistanceQueue = { 0,1,-1,2,-2,3,-3 };
-    if(direction.x)
-        horizontalSearchingDistanceQueue =  { 0,1,-1,2,-2 };
-    BOOL  continuous = 1;
-    while(continuous)
-    {
-        continuous = 0;
-        for(SIGNED_COORD s : horizontalSearchingDistanceQueue)
-        {
-            BOOL searching = 1;
-            for(SIGNED_COORD depth = 1; depth <= 2; depth++)
-            {
-                //Vec2D p(root.x+(direction.y!=0)*horizontal[i]+direction.x, root.y+(direction.x!=0)*horizontal[i]+direction.y);
-                Vec2D p = root + direction * depth + direction.horizontal() * s;
-                if(_bInImage(p) && _img->read(p.x,p.y) > _img->threshold() && _bOnEdge(p))
-                {
-                    edge.push_back(p);
-                    root = p;
-                    continuous = 1;
-                    searching = 0;
-                    break;
-                }
-            }
-            if(!searching)
-                break;
-        }
-    }
-}
+	UINT32	greyScaleMin = 0u;
+	UINT32	greyScaleMax = 0u;
+	UINT32	s_all_u = 0u;
+	float	s_all_f = 0.0f;
+	UINT32	n_0_u = 0u;
+	float	n_0_f = 0.0f;
+	UINT32	s_0 = 0u;
+	float	VAR = 0.0f;
+	BYTE	THRESHOLD = 0x00;
+	UINT32  histrogram[256];
+    UINT32  histrogramIntegrated[256];
 
-BOOL ImageAnalyzer::_findRoot(COORD bottom)
-{
-    _left.clear();
-    _right.clear();
-    for (COORD x = 0; x < _img->size().x; x++)
-    {
-        BYTE val = _img->read(x,bottom);
-        if (val > _img->threshold())
-        {
-            if (   _img->read(x+1,bottom) > _img->threshold() 
-                && _img->read(x-1,bottom) < _img->threshold())
-            {
-                Vec2D p(x, bottom);
-                _left.push_back(p);
-            }
-            else if (  _img->read(x-1,bottom) > _img->threshold() 
-                    && _img->read(x+1,bottom) < _img->threshold())
-            {
-                Vec2D p(x, bottom);
-                _right.push_back(p);
-            }
-        }
-    }
-    //TODO: verify by k, crossroads
+	float ALL_PIXEL = (float)((_img->size().y - topBoundary) * _img->size().x);
+	float ALL_PIXEL_SMALL = ALL_PIXEL * 0.0001f;
 
-    if(_left.size() && _right.size())
-        return true;
-    return false;
-}
+	// STEP1 - get the histrogram and grey-scale limits
+	for (UINT32 _CLEAR = 0; _CLEAR < 256; _CLEAR++)
+		histrogram[_CLEAR] = 0;
 
-BOOL ImageAnalyzer::_bOnEdge(Vec2D &p)
-{
-	UINT8 counter = 0;
-	if (_img->size().x-1 == p.x)     //右边沿
+	for (uint_fast8_t y = topBoundary; y < _img->size().y; y++)
+		for (uint_fast8_t x = 0; x < _img->size().x; x++)
+		{
+			UINT8 value = _img->read(x,y);
+			histrogram[value]++;
+		}
+
+	for (greyScaleMin = 0; greyScaleMin < 256 && histrogram[greyScaleMin] == 0; greyScaleMin++)
+		;
+	for (greyScaleMax = 255; greyScaleMax > greyScaleMin && histrogram[greyScaleMax] == 0; greyScaleMax--)
+		;
+
+	// STEP2 - calculate s_all, the integration of the histrogram over grey-scale. Simultaneously, generate a integration table.
+	// Do some scaling here to prevent over-flow
+	for (UINT32 _LEVEL = 0; _LEVEL < greyScaleMin; _LEVEL++)
+		histrogramIntegrated[_LEVEL] = 0;
+	for (UINT32 _LEVEL = greyScaleMin; _LEVEL <= greyScaleMax; _LEVEL++)
 	{
-		counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-                + (_img->read(p.x,  p.y-1) > _img->threshold())
-                + (_img->read(p.x-1,p.y  ) > _img->threshold())
-                + (_img->read(p.x-1,p.y+1) > _img->threshold())
-                + (_img->read(p.x-1,p.y-1) > _img->threshold());
-                //上+下+左+左上+左下
-		//if (counter <= 3)
-			return true;
+		s_all_u += (histrogram[_LEVEL] * _LEVEL);
+		histrogramIntegrated[_LEVEL] = s_all_u;
 	}
-	else if (0 == p.x)		//左边沿
+	s_all_f = (float)(s_all_u)*0.0001f;
+
+	// STEP3 - calcaulate t, which is the threshold
+	// avoid division to speed-up
+	for (UINT32 _TH = greyScaleMin; _TH < greyScaleMax; _TH++)
 	{
-        counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-                + (_img->read(p.x,  p.y-1) > _img->threshold())
-                + (_img->read(p.x+1,p.y  ) > _img->threshold())
-                + (_img->read(p.x+1,p.y+1) > _img->threshold())
-                + (_img->read(p.x+1,p.y-1) > _img->threshold());
-                //上+下+右+右上+右下
-		//if (counter <= 3)
-			return true;
+		n_0_u += histrogram[_TH];
+		n_0_f = (float)(n_0_u);
+		s_0 = histrogramIntegrated[_TH];
+
+		float VAR_Current = 0.0f;
+		VAR_Current = ((ALL_PIXEL_SMALL * (float)(s_0)-n_0_f * s_all_f)) * 0.000001f;
+		VAR_Current *= VAR_Current;
+		VAR_Current /= (n_0_f * (float)(ALL_PIXEL - n_0_f));
+
+		if (VAR_Current > VAR)
+		{
+			THRESHOLD = _TH;
+			VAR = VAR_Current;
+		}
 	}
-	else
-	{
-		counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-                + (_img->read(p.x,  p.y-1) > _img->threshold())
-                + (_img->read(p.x+1,p.y  ) > _img->threshold())
-                + (_img->read(p.x+1,p.y+1) > _img->threshold())
-                + (_img->read(p.x+1,p.y-1) > _img->threshold())
-                + (_img->read(p.x-1,p.y  ) > _img->threshold())
-                + (_img->read(p.x-1,p.y+1) > _img->threshold())
-                + (_img->read(p.x-1,p.y-1) > _img->threshold());
-		if (counter <= 6)
-			return true;
-	}
-	return false;
+	return THRESHOLD;
 }
 
-Point ImageAnalyzer::_closestPoint(Point &source, std::initializer_list<Point> init_list)
+const ImageAnalyzer::Operator ImageAnalyzer::SOBEL = 
 {
-    Point tempPoint;
-    ELEMENT tempDistance = ELEMENT(-1); //MAXIUM of unsigned int
-    
-    for(Point currentPoint : init_list)
-    {
-        ELEMENT currentDistance = _distanceSquared(*source,*currentPoint);
-        if(currentDistance < tempDistance)
-        {
-            tempDistance = currentDistance;
-            tempPoint = currentPoint;
-        }
-    }
-    return tempPoint;
-}
+    ImageBase<INT8>(Size(3, 3), {-1, 0, 1,  -2, 0, 2,  -1, 0, 1}),
+    ImageBase<INT8>(Size(3, 3), {-1,-2,-1,   0, 0, 0,   1, 2, 1})
+};
+
+const ImageAnalyzer::Operator ImageAnalyzer::SCHARR = 
+{
+    ImageBase<INT8>(Size(3, 3), {-3, 0, 3,  -10, 0, 10,  -3, 0, 3}),
+    ImageBase<INT8>(Size(3, 3), {-3,-10,-3,   0, 0, 0,   3, 10, 3})
+};

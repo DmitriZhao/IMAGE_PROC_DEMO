@@ -3,34 +3,34 @@
 #include <iostream>
 
 template <typename T>
-class ImageBase : public std::enable_shared_from_this<ImageBase<T>>
+class ImageBase
 {
 private:
     std::vector<T> _data;
+
+protected:
     Size    _size;
 
 public:
-    ImageBase(Size size, T defaultVal);
-    typedef std::shared_ptr<ImageBase<T>> Ptr;
-    Ptr     getPtr()                           {return std::enable_shared_from_this<ImageBase<T>>::shared_from_this();}
-    Size    size  ()                           {return _size;}
-    T       read  (COORD x, COORD y);
-    void    write (COORD x, COORD y, T value)  {_data.at(y*_size.x + x) = value;}
+    ImageBase(const Size& size, const T& defaultVal);
+    ImageBase(const Size& size, std::initializer_list<T> list);
+    Size         size  () const                     {return _size;}
+    T            read  (COORD x, COORD y) const     {return _data.at(y*_size.x + x);}
+    void         write (COORD x, COORD y, T value)  {_data.at(y*_size.x + x) = value;}
 };
 
 template <typename T>
-inline ImageBase<T>::ImageBase(Size size, T defaultVal)
+inline ImageBase<T>::ImageBase(const Size& size, const T& defaultVal)
 {
     _size = size;
     _data.resize(_size.area(),defaultVal);
 }
 
 template <typename T>
-T ImageBase<T>::read (COORD x, COORD y)
+inline ImageBase<T>::ImageBase(const Size& size, std::initializer_list<T> list)
 {
-    if(x<size().x && y<size().y)
-        return _data.at(y*_size.x + x);
-    else
-        std::cerr << "out_of_range error"<<std::endl;
-    return T(0);
+    _size = size;
+    _data.reserve(_size.area());
+    for(auto i : list)
+        _data.push_back(i);
 }

@@ -1,34 +1,32 @@
 #include <iostream>
 #include <vector>
 #include <fstream>
-#include "Types.h"
-#include "FileReaderInstance.hpp"
-#include "BmpReader.hpp"
-#include "GreyScaleImage.h"
+#include "ImageReader.hpp"
 #include "ImageAnalyzer.h"
+#include "LaneAnalyzer.h"
 
 using namespace std;
 
 int main(int argc, char** argv)
 {
-    FileReaderInstance::Ptr fileReader(new FileReaderInstance(argv[1]));
-    if(!fileReader->available())
-    {
-        cerr<<"BMP read failed, aborting"<<endl;
-        return 1;
-    }
-    BmpReader::Ptr bmpReader(new BmpReader(fileReader));
-
-    GreyScaleImage::Ptr img(new GreyScaleImage(bmpReader));
-    //img->show();
-    img->evalThreshold(HEIGHT/2);
-    //img->show();
+    ImageReader imgReader; 
+    imgReader.init(argv[1]);
     
-    ImageAnalyzer::Ptr imageAnalyzer(new ImageAnalyzer(img));
-    imageAnalyzer->findPath();
-    imageAnalyzer->show();
+    ImageAnalyzer imgAnalyzer = ImageAnalyzer(imgReader.getImage());
+    imgAnalyzer.evalThreshold(HEIGHT/2);
 
-    //cin.get();
+    for(COORD x = 1; x < imgReader.size().x-1; x++)
+        for(COORD y = 1; y < imgReader.size().y-1; y++)
+            imgAnalyzer.applyOperator(x, y, ImageAnalyzer::SOBEL);
+
+    imgAnalyzer.showGradMap(byThreshold);
+
+    LaneAnalyzer laneAnalyzer = LaneAnalyzer(imgReader.getImage());
+    laneAnalyzer.findPath();
+    laneAnalyzer.show();
+
+    cout << "Press any key to exit...";
+    cin.get();
 
     return 0;
 }

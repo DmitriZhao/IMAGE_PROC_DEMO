@@ -32,8 +32,8 @@ typedef struct Size
 {
     COORD   x;
     COORD   y;
-    ELEMENT  area()  {return x*y;}
-    Size(COORD x=0, COORD y=0)
+    ELEMENT  area()  {return x * y;}
+    Size(COORD x = 0, COORD y = 0)
     {
         this->x = x;
         this->y = y;
@@ -45,7 +45,7 @@ typedef struct Pixel        //RGB888
     BYTE   b;
     BYTE   g;
     BYTE   r;
-    Pixel(UINT8 b=0, UINT8 g=0, UINT8 r=0)
+    Pixel(UINT8 b = 0, UINT8 g = 0, UINT8 r = 0)
     {
         this->b = b;
         this->g = g;
@@ -62,14 +62,14 @@ typedef struct Vec2D        //二维向量
         this->x = x;
         this->y = y;
     }
-    Vec2D horizontal(void)
+    Vec2D horizontal(void) const
     {
         if(0 == this->x)
-            return Vec2D(1,0);
+            return Vec2D(1, 0);
         else if(0 == this->y)
-            return Vec2D(0,1);
+            return Vec2D(0, 1);
         else
-            return Vec2D(0,0);
+            return Vec2D(0, 0);
     }
     Vec2D& operator = (const Vec2D& vec)
     {
@@ -77,38 +77,20 @@ typedef struct Vec2D        //二维向量
         this->y = vec.y;
         return *this;
     }
-    Vec2D operator + (const Vec2D& vec)
+    Vec2D operator + (const Vec2D& vec) const
     {
-        return Vec2D(this->x+vec.x, this->y+vec.y);
+        return Vec2D(this->x + vec.x, this->y + vec.y);
     }
-    Vec2D operator * (const SIGNED_COORD& c)
+    Vec2D operator * (const SIGNED_COORD& c) const
     {
-        return Vec2D(c* this->x, c* this->y);
+        return Vec2D(c * this->x, c * this->y);
     }
-    Vec2D operator / (const SIGNED_COORD& c)
+    Vec2D operator / (const SIGNED_COORD& c) const
     {
-        return Vec2D(this->x/c, this->y/c);
+        return Vec2D(this->x / c, this->y / c);
     }    
 }Vec2D;
 
-const Vec2D UP    = Vec2D( 0,-1);
-const Vec2D DOWN  = Vec2D( 0, 1);
-const Vec2D LEFT  = Vec2D(-1, 0);
-const Vec2D RIGHT = Vec2D( 1, 0);
-
-typedef std::vector<Vec2D> Path;    //路径
-typedef Path::iterator Point;       //路径上的点(因此是(迭)指(代)针(器)，解引用得到位置向量)
-
-typedef struct Scalar
-{
-    BYTE value;
-    Scalar(BYTE value = 0) {this->value = value;}
-}Scalar;
-
-class Line
-{
-private:
-    //TODO
-};
+enum ShowMethod {byHex, byThreshold};
 
 #endif
