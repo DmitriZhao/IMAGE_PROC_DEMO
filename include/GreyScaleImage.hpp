@@ -10,7 +10,6 @@ class GreyScaleImage : public ImageBase<BYTE>, public std::enable_shared_from_th
 {
 private:
     BYTE    _threshold = 0x7f;
-    BYTE    _otsu(COORD topBoundary);
 public:
     GreyScaleImage(BmpReader::Ptr bmpReader);
     GreyScaleImage(const Size& size, BYTE defaultVal) : ImageBase<BYTE>(size, defaultVal){};
@@ -48,7 +47,11 @@ inline void GreyScaleImage::show(ShowMethod method)
 					std::cout << '*';
 			}
 			else if(byHex == method)
-				std::cout<<std::hex<<(INT8)byte<<' ';
+			{
+				byte /= 0x10;
+				std::cout << std::hex << (int)byte;
+			}
+				//std::cout<<std::hex<<(INT8)byte<<' ';
 		}
 		std::cout << std::endl;
 	}

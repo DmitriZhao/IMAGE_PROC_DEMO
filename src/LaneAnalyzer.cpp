@@ -7,6 +7,7 @@
 LaneAnalyzer::LaneAnalyzer(GreyScaleImage::Ptr img)
 {
     _img = img;
+    _analyzer = new ImageAnalyzer(_img);
     _result = std::make_shared<GreyScaleImage>(_img->size(),' ');
     for(COORD x = 0; x < _img->size().x; x++)
     {
@@ -49,7 +50,7 @@ BOOL LaneAnalyzer::findPath()
         // if(row > _img->size().y * 2 / 3)
         //     return false;
     }
-
+/*
     //find midpoint on straight lane
     Point pLeft = _left.begin(), pRight = _right.begin();
     for(; pLeft < _left.end() && pRight < _right.end();
@@ -61,10 +62,14 @@ BOOL LaneAnalyzer::findPath()
 
     Path& shorterPath = (_left.size()<_right.size()) ? _left : _right;
     Path& longerPath  = (_left.size()>_right.size()) ? _left : _right;
+*/
+    COORD leftInflectionOffset = _left.size();      //record inflection points
+    COORD rightInflectionOffset = _right.size();
 
-    _dfs(_left.back(), _left, LEFT);       //extend _left and _right in curved lane if successful
-    _dfs(_right.back(), _right, LEFT);
+    _dfs(_left.back(), _left, RIGHT);       //extend _left and _right in curved lane if successful
+    _dfs(_right.back(), _right, RIGHT);
 
+/*
     //find midpoint on curved lane
     Point lastPoint = (_left.size()<_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);
     Point source    = (_left.size()>_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);;
@@ -78,18 +83,18 @@ BOOL LaneAnalyzer::findPath()
         else
             break;
     }
-
+*/
     for(auto p : _left)
         _result->write(p.x,p.y,'L');
 
     for(auto p : _right)
         _result->write(p.x,p.y,'R');
         
-    for(auto p : _mid)
-        _result->write(p.x,p.y,'M');
+    //for(auto p : _mid)
+        // _result->write(p.x,p.y,'M');
 
-    _result->write(_left.at(leftInflectionOffset).x,_left.at(leftInflectionOffset).y,'X');
-    _result->write(_right.at(rightInflectionOffset).x,_right.at(rightInflectionOffset).y,'Y');
+    _result->write(_left.at(leftInflectionOffset-1).x,_left.at(leftInflectionOffset-1).y,'X');
+    _result->write(_right.at(rightInflectionOffset-1).x,_right.at(rightInflectionOffset-1).y,'Y');
     return true;
 }
 
@@ -118,10 +123,10 @@ void LaneAnalyzer::_dfs(const Vec2D& root, Path& edge, const Vec2D& direction)
     while(continuous)
     {
         continuous = 0; 
-        for(SIGNED_COORD s : horizontalSearchingDistanceQueue)
+        for(SIGNED_COORD depth = 1; depth <= 2; depth++)
         {
             BOOL searching = 1;
-            for(SIGNED_COORD depth = 1; depth <= 2; depth++)
+            for(SIGNED_COORD s : horizontalSearchingDistanceQueue)
             {
                 //Vec2D p(root.x+(direction.y!=0)*horizontal[i]+direction.x, root.y+(direction.x!=0)*horizontal[i]+direction.y);
                 Vec2D p = rootTemp + direction * depth + direction.horizontal() * s;
@@ -177,38 +182,47 @@ BOOL LaneAnalyzer::_bOnEdge(const Vec2D &p)
 	UINT8 counter = 0;
 	if (_img->size().x-1 == p.x)     //右边沿
 	{
-		counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-                + (_img->read(p.x,  p.y-1) > _img->threshold())
-                + (_img->read(p.x-1,p.y  ) > _img->threshold())
-                + (_img->read(p.x-1,p.y+1) > _img->threshold())
-                + (_img->read(p.x-1,p.y-1) > _img->threshold());
+		// counter = (_img->read(p.x,  p.y+1) > _img->threshold())
+        //         + (_img->read(p.x,  p.y-1) > _img->threshold())
+        //         + (_img->read(p.x-1,p.y  ) > _img->threshold())
+        //         + (_img->read(p.x-1,p.y+1) > _img->threshold())
+        //         + (_img->read(p.x-1,p.y-1) > _img->threshold());
                 //上+下+左+左上+左下
 		//if (counter <= 3)
 			return true;
 	}
 	else if (0 == p.x)		//左边沿
 	{
-        counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-                + (_img->read(p.x,  p.y-1) > _img->threshold())
-                + (_img->read(p.x+1,p.y  ) > _img->threshold())
-                + (_img->read(p.x+1,p.y+1) > _img->threshold())
-                + (_img->read(p.x+1,p.y-1) > _img->threshold());
+        // counter = (_img->read(p.x,  p.y+1) > _img->threshold())
+        //         + (_img->read(p.x,  p.y-1) > _img->threshold())
+        //         + (_img->read(p.x+1,p.y  ) > _img->threshold())
+        //         + (_img->read(p.x+1,p.y+1) > _img->threshold())
+        //         + (_img->read(p.x+1,p.y-1) > _img->threshold());
                 //上+下+右+右上+右下
 		//if (counter <= 3)
 			return true;
 	}
+    else if (_img->size().y-1 == p.y)
+    {
+        return true;
+    }
 	else
 	{
-		counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-                + (_img->read(p.x,  p.y-1) > _img->threshold())
-                + (_img->read(p.x+1,p.y  ) > _img->threshold())
-                + (_img->read(p.x+1,p.y+1) > _img->threshold())
-                + (_img->read(p.x+1,p.y-1) > _img->threshold())
-                + (_img->read(p.x-1,p.y  ) > _img->threshold())
-                + (_img->read(p.x-1,p.y+1) > _img->threshold())
-                + (_img->read(p.x-1,p.y-1) > _img->threshold());
-		if (counter <= 6)
+        INT16 threshold;
+        INT16 val = 16;
+		counter = (_img->read(p.x,  p.y+1) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x,  p.y-1) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x+1,p.y  ) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x+1,p.y+1) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x+1,p.y-1) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x-1,p.y  ) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x-1,p.y+1) < _img->read(p.x, p.y) - val )
+                + (_img->read(p.x-1,p.y-1) < _img->read(p.x, p.y) - val );
+		if (counter >= 2)
 			return true;
+        // BYTE grad = _analyzer->applyOperator(p.x, p.y, ImageAnalyzer::RUA);
+        // if (grad > 40)
+        //     return true;
 	}
 	return false;
 }

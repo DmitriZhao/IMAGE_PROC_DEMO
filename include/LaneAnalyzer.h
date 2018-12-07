@@ -2,11 +2,13 @@
 #define _LANE_ANALYZER_H
 #include "Types.h"
 #include "GreyScaleImage.hpp"
+#include "ImageAnalyzer.h"
 
 class LaneAnalyzer
 {
 public:
 	explicit LaneAnalyzer(GreyScaleImage::Ptr img);
+	~LaneAnalyzer()	{delete _analyzer;}
     BOOL	 findPath();
 	void 	 show();
 	typedef  std::vector<Vec2D> Path;    //路径
@@ -18,6 +20,7 @@ public:
 private:
 	GreyScaleImage::Ptr	_img;
 	GreyScaleImage::Ptr _result;
+	ImageAnalyzer* _analyzer;
 	Path _left;
 	Path _right;
 	Path _mid;

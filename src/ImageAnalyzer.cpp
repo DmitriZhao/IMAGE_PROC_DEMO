@@ -12,7 +12,7 @@ BYTE ImageAnalyzer::applyOperator(COORD x, COORD y, const Operator& op)
 {
 	if(x<1 || x>_img->size().x-2 || y<1 || y>_img->size().y-2)
 	{
-		std::cerr << "out_of_range error"<<std::endl;
+		std::cerr << "Operator: out_of_range error at "<< (int)x << ", "<< (int)y <<std::endl;
 		return 0;
 	}
 	INT16 Gx = 0, Gy = 0;
@@ -27,15 +27,24 @@ BYTE ImageAnalyzer::applyOperator(COORD x, COORD y, const Operator& op)
 	return (COORD)sqrt(Gx*Gx+Gy*Gy);
 }
 
-GreyScaleImage::Ptr ImageAnalyzer::getGradMap(const ImageAnalyzer::Operator& op)
+GreyScaleImage::Ptr ImageAnalyzer::getGradMap(const Operator& op)
 {
 	GreyScaleImage::Ptr gradImage = std::make_shared<GreyScaleImage>(_img->size(),0);
-
-	for(COORD x = 1; x < gradImage->size().x-1; x++)
-        for(COORD y = 1; y < gradImage->size().y-1; y++)
-            gradImage->write(x, y, applyOperator(x, y, op));
-
+	_evalGradMap(gradImage, op);
 	return gradImage->getPtr();
+}
+
+GreyScaleImage::Ptr ImageAnalyzer::becomeGradMap(const Operator& op)
+{
+	_evalGradMap(_img, op);
+	return _img->getPtr();
+}
+
+void ImageAnalyzer::_evalGradMap(GreyScaleImage::Ptr result, const ImageAnalyzer::Operator& op)
+{
+	for(COORD x = 1; x < result->size().x-1; x++)
+        for(COORD y = 1; y < result->size().y-1; y++)
+            result->write(x, y, applyOperator(x, y, op));
 }
 
 BYTE ImageAnalyzer::_otsu(const COORD topBoundary)
@@ -114,4 +123,10 @@ const ImageAnalyzer::Operator ImageAnalyzer::SCHARR =
 {
     ImageBase<INT8>(Size(3, 3), {-3, 0, 3,  -10, 0, 10,  -3, 0, 3}),
     ImageBase<INT8>(Size(3, 3), {-3,-10,-3,   0, 0, 0,   3, 10, 3})
+};
+
+const ImageAnalyzer::Operator ImageAnalyzer::RUA = 
+{
+    ImageBase<INT8>(Size(3, 3), {-1, -1, -1,  -1, 8, -1,  -1, -1, -1}),
+    ImageBase<INT8>(Size(3, 3), {-1, -1, -1,  -1, 8, -1,  -1, -1, -1})
 };
