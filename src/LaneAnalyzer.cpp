@@ -102,7 +102,19 @@ BOOL LaneAnalyzer::findPath()
     // std::cout << "LEFT VARIANCE: " << (int)_variance(_left) << std::endl;
     // std::cout << "RIGHT VARIANCE: " << (int)_variance(_right) << std::endl;
 
-    if(_variance(_left_1) + _variance(_right_1) > 6 || 2 == _left_1.back().point.x || _img->size().x -3 == _left_1.back().point.x || 2 == _right_1.back().point.x || _img->size().x -3 == _right_1.back().point.x)
+    COORD leftBoundaryCount, rightBoundaryCount;
+    for(auto p : _left_1)
+    {
+        if(p.point.x <= 2 || p.point.x>=_img->size().x-3)
+        leftBoundaryCount++;
+    }
+    for(auto p : _right_1)
+    {
+        if(p.point.x <= 2 || p.point.x>=_img->size().x-3)
+        rightBoundaryCount++;
+    }
+
+    if(_variance(_left_1) + _variance(_right_1) > 6 || leftBoundaryCount >=5 || rightBoundaryCount >=5)
     {
         if(abs(_left_1.back().direction.x + _left_1.back().direction.y)
          + abs(_right_1.back().direction.x + _right_1.back().direction.y) > 10)
@@ -123,17 +135,76 @@ BOOL LaneAnalyzer::findPath()
             {
                 bottom -= 3;
             }
-            while(!_findRoot(bottom, _left_2, _right_2) && bottom >40);
+            while(!_findRoot(bottom, _left_2, _right_2) && bottom >50);
 
-            if(bottom <= 40)
+            if(bottom <= 50)
                 break;
 
-            _dfs(_left_2.at(0), _left_2,UP);               //extend _left and _right in straight lane if successful
-            _dfs(_right_2.at(0), _right_2,UP);
+            _dfs(_left_2.at(0), _left_2, UP);               //extend _left and _right in straight lane if successful
+            _dfs(_right_2.at(0), _right_2, UP);
         }
-    while((_left_2.size()<5 || _right_2.size()<5) && bottom >40);
+        while((_left_2.size()<5 || _right_2.size()<5) && bottom >50);
+    }
+    else
+    {
+        _left_2.push_back(_left_1.back());
+        _right_2.push_back(_right_1.back());  
+        if(leftTurn ==_laneType)
+        {
+            _dfs(_left_1.back(), _left_2, LEFT);
+            _dfs(_right_1.back(), _right_2, LEFT);
+        }
+        else if(rightTurn ==_laneType)
+        {
+            _dfs(_left_1.back(), _left_2, RIGHT);
+            _dfs(_right_1.back(), _right_2, RIGHT);
+        }
+        BOOL bLeftIsLonger = _left_1.size()+_left_2.size() > _right_1.size()+_right_2.size();
+        Path& shorterPath_1 = bLeftIsLonger ? _right_1 : _left_1;
+        Path& shorterPath_2 = bLeftIsLonger ? _right_2 : _left_2;
+        Path& longerPath_1  = bLeftIsLonger ? _left_1 : _right_1;
+        Path& longerPath_2  = bLeftIsLonger ? _left_2 : _right_2;
         
+        //find midpoint on straight lane
+        Point pShort = shorterPath_1.begin(), pLong = longerPath_1.begin();
 
+        while(pShort < shorterPath_1.end() - 1)
+        {
+            if(pShort->point.y == pLong->point.y)
+            {
+                _mid.push_back({(pShort->point+pLong->point)/2, Vec2D(0,0)});
+                pShort++;
+                pLong++;
+            }
+            else if(pShort->point.y > pLong->point.y)
+                pShort++;
+            else
+                pLong++;
+        } //NOTE: 假设 longerPath_1.back().point.y < shorterPath_1.back().point.y
+
+        INT8 coeff = rightTurn == _laneType ? 1 : -1;
+        while((pShort->point.x - pLong->point.x) * coeff > 0)
+        {
+            _mid.push_back({(pShort->point+pLong->point)/2, Vec2D(0,0)});
+            pLong++;
+            if(pLong == longerPath_1.end())
+                pLong = longerPath_2.begin();
+        }
+        pShort = shorterPath_2.begin();
+
+        while(pShort < shorterPath_2.end() && pLong < longerPath_2.end())
+        {
+            if(pShort->point.x == pLong->point.x)
+            {
+                _mid.push_back({(pShort->point+pLong->point)/2, Vec2D(0,0)});
+                pShort++;
+                pLong++;
+            }
+            else if((pShort->point.x - pLong->point.x) * coeff < 0)
+                pShort++;
+            else
+                pLong++;
+        }
     }
 
     // _dfs(_left.back(), _left, LEFT);       //extend _left and _right in curved lane if successful
@@ -155,19 +226,19 @@ BOOL LaneAnalyzer::findPath()
     }
 */
     for(auto p : _left_1)
-        _result->write(p.point.x,p.point.y,'L');
+        _result->write(p.point.x, p.point.y, 'L');
 
-     for(auto p : _right_1)
-        _result->write(p.point.x,p.point.y,'R');
+    for(auto p : _right_1)
+        _result->write(p.point.x, p.point.y, 'R');
 
     for(auto p : _left_2)
-        _result->write(p.point.x,p.point.y,'L');
+        _result->write(p.point.x, p.point.y, 'X');
 
-     for(auto p : _right_2)
-        _result->write(p.point.x,p.point.y,'R');
+    for(auto p : _right_2)
+        _result->write(p.point.x, p.point.y, 'Y');
         
-    //for(auto p : _mid)
-        // _result->write(p.x,p.y,'M');
+    for(auto p : _mid)
+        _result->write(p.point.x, p.point.y, 'M');
 
     // _result->write(_left_1.at(leftInflectionOffset-1).point.x,_left_1.at(leftInflectionOffset-1).point.y,'X');
     // _result->write(_right_1.at(rightInflectionOffset-1).point.x,_right_1.at(rightInflectionOffset-1).point.y,'Y');
