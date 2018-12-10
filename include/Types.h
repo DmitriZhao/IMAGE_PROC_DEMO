@@ -91,6 +91,13 @@ typedef struct Vec2D        //二维向量
     }    
 }Vec2D;
 
+typedef struct Vec4D
+{
+    Vec2D point;
+    Vec2D direction;
+}Vec4D;
+
 enum ShowMethod {byHex, byThreshold};
+enum LaneType {crossRoad, leftTurn, rightTurn};
 
 #endif

@@ -14,6 +14,7 @@ int main(int argc, char** argv)
     
     ImageAnalyzer imgAnalyzer = ImageAnalyzer(imgReader.getImage());
     imgAnalyzer.evalThreshold(HEIGHT/2);
+
     // imgReader.getImage()->show(byThreshold);
     //imgAnalyzer.getGradMap(ImageAnalyzer::RUA)->show(byHex);
     // GreyScaleImage::Ptr gradImg_sobel  = imgAnalyzer.getGradMap(ImageAnalyzer::SOBEL);
@@ -31,7 +32,7 @@ int main(int argc, char** argv)
     LaneAnalyzer laneAnalyzer = LaneAnalyzer(imgReader.getImage());
     laneAnalyzer.findPath();
     laneAnalyzer.show();
-
+    laneAnalyzer.showLaneType();
     // cout << "Press any key to exit...";
     // cin.get();
 
