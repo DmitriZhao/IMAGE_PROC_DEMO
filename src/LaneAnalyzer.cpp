@@ -18,6 +18,18 @@ LaneAnalyzer::LaneAnalyzer(GreyScaleImage::Ptr img)
 
 BOOL LaneAnalyzer::findPath()
 {
+    // for(COORD y=2; y<_img->size().y; y++)
+	// {
+	// 	for(COORD x = 0; x < _img->size().x; x++)
+	// 	{
+	// 		if(_bOnEdge(Vec2D(x,y)))
+	// 			std::cout<<'*';
+	// 		else
+	// 			std::cout<<' ';
+	// 	}
+	// 	std::cout << std::endl;
+	// }
+
     COORD bottom = _img->size().y;
     do{
         _left_1.clear();
@@ -48,8 +60,8 @@ BOOL LaneAnalyzer::findPath()
 
     if(_variance(_left_1) + _variance(_right_1) > 6 || leftBoundaryCount >=5 || rightBoundaryCount >=5)
     {
-        if(abs(_left_1.back().direction.x + _left_1.back().direction.y)
-         + abs(_right_1.back().direction.x + _right_1.back().direction.y) > 10)
+        if(abs(_left_1.rbegin()->direction.x + _left_1.rbegin()->direction.y)
+         + abs(_right_1.rbegin()->direction.x + _right_1.rbegin()->direction.y) > 10)
             _laneType = rightTurn;
         else
             _laneType = leftTurn;
@@ -59,12 +71,7 @@ BOOL LaneAnalyzer::findPath()
     
     if(crossRoad == _laneType)
     {
-        Line l1 = _leastSquares(_left_1);
-        Line l2 = _leastSquares(_right_1);
-        _drawLine(l1, _left_1.front().point.y);
-        _drawLine(l2, _right_1.front().point.y);
-
-        COORD bottom = _left_1.back().point.y < _right_1.back().point.y ? _left_1.back().point.y : _right_1.back().point.y;
+        COORD bottom = _left_1.rbegin()->point.y < _right_1.rbegin()->point.y ? _left_1.rbegin()->point.y : _right_1.rbegin()->point.y;
         do{
             _left_2.clear();
             _right_2.clear();
@@ -72,15 +79,89 @@ BOOL LaneAnalyzer::findPath()
             {
                 bottom -= 3;
             }
-            while(!_findRoot(bottom, _left_2, _right_2) && bottom >50);
+            while(!_findRoot(bottom, _left_2, _right_2) && bottom > _img->size().y/3);
 
-            if(bottom <= 50)
+            if(bottom <= _img->size().y/3)
                 break;
 
-            _dfs(_left_2.at(0), _left_2, UP);               //extend _left and _right in straight lane if successful
-            _dfs(_right_2.at(0), _right_2, UP);
+            if(_left_2.begin()->point.x < _left_1.rbegin()->point.x
+            || _right_2.begin()->point.x > _right_2.rbegin()->point.x)
+                continue;
+
+            _dfs(_left_2.front(), _left_2, UP);               //extend _left and _right in straight lane if successful
+            _dfs(_right_2.front(), _right_2, UP);
         }
-        while((_left_2.size()<5 || _right_2.size()<5) && bottom >50);
+        while((_left_2.size()<5 || _right_2.size()<5) && bottom >_img->size().y/3);
+
+        if(bottom < _img->size().y/3)
+        {
+            _left_2.clear();
+            _right_2.clear();
+        }
+        Line l1 = _leastSquares(_left_1);
+        Line l2 = _leastSquares(_right_1);
+        if(_left_1.begin()->point.y > _img->size().y-10 || _right_1.begin()->point.y > _img->size().y-10 )
+        {
+            if(bottom < _img->size().y/3)     //_2缺失，向上延长
+            {
+                _drawLine(l1, _left_1, _img->size().y/2, _left_1.rbegin()->point.y);
+                _drawLine(l2, _right_1, _img->size().y/2, _right_1.rbegin()->point.y);
+            }
+            else                //_1, _2之间补全
+            {
+                _drawLine(l1, _left_1, _left_2.begin()->point.y, _left_1.rbegin()->point.y);
+                _drawLine(l2, _right_1, _right_2.begin()->point.y, _right_1.rbegin()->point.y);
+            }
+        }
+        else                    //下缺失，向下延长
+        {
+            _drawLine(l1, _left_2, _left_1.begin()->point.y, _img->size().y-3);
+            _drawLine(l2, _left_2, _right_1.begin()->point.y, _img->size().y-3);
+        }
+        if(_left_2.empty() || _left_1.begin()->point.y > _left_2.begin()->point.y)
+        {
+            Point pLeft = _left_1.begin(), pRight = _right_1.begin();
+            while(pLeft != _left_2.end() && pRight != _right_2.end())
+            {
+                if(pLeft->point.y == pRight->point.y)
+                {
+                    _mid.push_back({(pLeft->point + pRight->point) / 2, {0,0}});
+                    pLeft++;
+                    pRight++;
+                }
+                else if(pLeft->point.y > pRight->point.y)
+                    pLeft++;
+                else
+                    pRight++;
+                
+                if(pLeft == _left_1.end())
+                    pLeft = _left_2.begin();
+                if(pRight == _right_1.end())
+                    pRight = _right_2.begin();
+            }
+        }
+        else
+        {
+            Point pLeft = _left_2.begin(), pRight = _right_2.begin();
+            while(pLeft != _left_1.end() && pRight != _right_1.end())
+            {
+                if(pLeft->point.y == pRight->point.y)
+                {
+                    _mid.push_back({(pLeft->point + pRight->point) / 2, {0,0}});
+                    pLeft++;
+                    pRight++;
+                }
+                else if(pLeft->point.y > pRight->point.y)
+                    pLeft++;
+                else
+                    pRight++;
+                
+                if(pLeft == _left_2.end())
+                    pLeft = _left_1.begin();
+                if(pRight == _right_2.end())
+                    pRight = _right_1.begin();
+            }
+        }
     }
     else
     {
@@ -117,7 +198,7 @@ BOOL LaneAnalyzer::findPath()
                 pShort++;
             else
                 pLong++;
-        } //NOTE: Assume that longerPath_1.back().point.y < shorterPath_1.back().point.y
+        } //NOTE: Assume that longerPath_1.rbegin()->point.y < shorterPath_1.rbegin()->point.y
 
         //find midpoint on curved lane
         INT8 coeff = rightTurn == _laneType ? 1 : -1;
@@ -245,7 +326,7 @@ BOOL LaneAnalyzer::_findRoot(COORD bottom, Path& leftEdge, Path& rightEdge)
     for(COORD x = 2; x < _img->size().x-2; x++)
     {
         Vec2D p = Vec2D(x,bottom);
-        if(_bOnEdge(Vec2D(x,bottom)) && _img->read(x,bottom) > _img->threshold())
+        if(_img->read(x,bottom) > _img->threshold() && _bOnEdge(Vec2D(x,bottom)))
         {
             root.push_back({p, _grad(p)});
             x+=5;
@@ -286,7 +367,7 @@ BOOL LaneAnalyzer::_bOnEdge(const Vec2D &p)
 {
 	if (_img->size().x-3 == p.x || _img->size().x-2 == p.x ||   //右边沿
            2 == p.x || 1 == p.x ||	                            //左边沿   
-	    _img->size().y-3 == p.y || _img->size().y-2 == p.y)     //下边沿
+	    _img->size().y-2 == p.y || _img->size().y-1 == p.y)     //下边沿
         return true;
 	else
 	{
@@ -371,6 +452,7 @@ COORD LaneAnalyzer::_variance(const Path& edge)
 
 Line LaneAnalyzer::_leastSquares(const Path& edge)
 {
+    COORD nDropPoint = 4;
     float a, b, temp;
     float A = 0.0;
 	float B = 0.0;
@@ -378,16 +460,16 @@ Line LaneAnalyzer::_leastSquares(const Path& edge)
 	float D = 0.0;
 	float E = 0.0;
 	float F = 0.0;
-    for(auto p : edge)
+    for(Point p = edge.begin(); p < edge.end() - nDropPoint; p++)
     {
-        A += p.point.x * p.point.x;
-        B += p.point.x;
-        C += p.point.x * p.point.y;
-        D += p.point.y;
+        A += p->point.y * p->point.y;
+        B += p->point.y;
+        C += p->point.x * p->point.y;
+        D += p->point.x;
     }
-	if( temp = (edge.size()*A - B*B) )// 判断分母不为0
+	if( 0 != (temp = ((edge.size() - nDropPoint)*A - B*B)))// 判断分母不为0
 	{
-		a = (edge.size()*C - B*D) / temp;
+		a = ((edge.size() - nDropPoint)*C - B*D) / temp;
 		b = (A*D - B*C) / temp;
 	}
 	else
@@ -398,13 +480,14 @@ Line LaneAnalyzer::_leastSquares(const Path& edge)
     return {a,b};
 }
 
-void LaneAnalyzer::_drawLine(const Line& line, COORD yMin)
+void LaneAnalyzer::_drawLine(const Line& line, Path& edge, COORD yMin, COORD yMax)
 {
-    for(COORD x = 0; x < _result->size().x; x++)
+    if(yMax - yMin < 5)
+        return;
+    for(COORD y = yMin + 1; y < yMax; y++)
     {
-        float y = line.a * x + line.b;
-        if(yMin <= y && y < _img->size().y)
-            _result->write(x, y, '$');
+        float x = line.a * y + line.b;
+        edge.push_back({{COORD(x),COORD(y)},{0,0}});
     }
 }
 

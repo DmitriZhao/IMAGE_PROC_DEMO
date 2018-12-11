@@ -29,7 +29,7 @@ private:
 	Path _mid;
 	LaneType _laneType;
 	Line _leastSquares(const Path& edge);
-	void _drawLine(const Line& line, COORD yMin);
+	void _drawLine(const Line& line, Path& edge, COORD yMin, COORD yMax);
 	COORD _variance(const Path& edge);
 	Vec2D _grad(Vec2D p);
     BOOL _bInImage(const Vec2D& p)    {return p.x>=2 && p.x<_img->size().x-2 && p.y>=2 && p.y<_img->size().y-2;}
