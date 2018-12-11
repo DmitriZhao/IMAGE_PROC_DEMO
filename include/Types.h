@@ -97,6 +97,12 @@ typedef struct Vec4D
     Vec2D direction;
 }Vec4D;
 
+typedef struct Line
+{
+    float a;
+    float b;
+}Line;
+
 enum ShowMethod {byHex, byThreshold};
 enum LaneType {crossRoad, leftTurn, rightTurn};
 

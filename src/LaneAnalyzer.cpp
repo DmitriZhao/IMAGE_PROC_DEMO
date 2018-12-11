@@ -18,51 +18,6 @@ LaneAnalyzer::LaneAnalyzer(GreyScaleImage::Ptr img)
 
 BOOL LaneAnalyzer::findPath()
 {
-    // COORD row = 1;
-    // for(COORD row = 0; row < _img->size().y; row++)
-    // {
-    //     if(_findRoot(_img->size().y - row - 3))     //write roots into _left & _right if successful
-    //     {
-    //         Vec4D leftRoot = _left.back();
-    //         Vec4D rightRoot = _right.back();
-    //         _dfs(leftRoot, _left,UP);               //extend _left and _right in straight lane if successful
-    //         _dfs(rightRoot, _right,UP);
-    //         // std::vector<Vec2D> left, right, leftTemp, rightTemp;;
-    //         // for(auto left_iter = _left.begin(), right_iter = _right.begin();
-    //         //     left_iter!=_left.end() && right_iter!=_right.end();
-    //         //     left_iter++, right_iter++)
-    //         // {
-    //         //     Vec2D leftRoot = *left_iter;
-    //         //     Vec2D rightRoot = *right_iter;
-    //         //     leftTemp.clear();
-    //         //     rightTemp.clear();
-    //         //     _dfs(leftRoot, leftTemp,UP);
-    //         //     _dfs(rightRoot, rightTemp,UP);
-    //         //     if(leftTemp.size()>left.size())
-    //         //         left = leftTemp;
-    //         //     if(rightTemp.size()>right.size())
-    //         //         right = rightTemp;
-    //         // }
-    //         // _left.insert(_left.end(),leftTemp.begin(),leftTemp.end());
-    //         // _right.insert(_right.end(),rightTemp.begin(),rightTemp.end());
-    //         break;
-    //     }
-    //     // if(row > _img->size().y * 2 / 3)
-    //     //     return false;
-    // }
-
-   	// for(COORD y=2; y<_img->size().y; y++)
-	// {
-	// 	for(COORD x = 0; x < _img->size().x; x++)
-	// 	{
-	// 		if(_bOnEdge(Vec2D(x,y)))
-	// 			std::cout<<'*';
-	// 		else
-	// 			std::cout<<' ';
-	// 	}
-	// 	std::cout << std::endl;
-	// }
-
     COORD bottom = _img->size().y;
     do{
         _left_1.clear();
@@ -77,32 +32,9 @@ BOOL LaneAnalyzer::findPath()
         _dfs(_right_1.at(0), _right_1,UP);
     }
     while(_left_1.size()<5 || _right_1.size()<5);
-/*
-    //find midpoint on straight lane
-    Point pLeft = _left.begin(), pRight = _right.begin();
-    for(; pLeft < _left.end() && pRight < _right.end();
-          pLeft++,               pRight++)
-        _mid.push_back((*pLeft + *pRight)/2);
 
-    COORD leftInflectionOffset = pLeft - _left.begin();      //record inflection points
-    COORD rightInflectionOffset = pRight - _right.begin();
-
-    Path& shorterPath = (_left.size()<_right.size()) ? _left : _right;
-    Path& longerPath  = (_left.size()>_right.size()) ? _left : _right;
-*/
-    // COORD leftInflectionOffset = _left.size();      //record inflection points
-    // COORD rightInflectionOffset = _right.size();
-
-    // for(auto p : _left)
-    //     std::cout<<p.direction.x<<' '<<p.direction.y<<std::endl;
-    
-    // std::cout<<"==================RUA===============\n";
-    // for(auto p : _right)
-    //     std::cout<<p.direction.x<<' '<<p.direction.y<<std::endl;
-    // std::cout << "LEFT VARIANCE: " << (int)_variance(_left) << std::endl;
-    // std::cout << "RIGHT VARIANCE: " << (int)_variance(_right) << std::endl;
-
-    COORD leftBoundaryCount, rightBoundaryCount;
+    //determine lane type
+    COORD leftBoundaryCount = 0, rightBoundaryCount = 0;
     for(auto p : _left_1)
     {
         if(p.point.x <= 2 || p.point.x>=_img->size().x-3)
@@ -127,6 +59,11 @@ BOOL LaneAnalyzer::findPath()
     
     if(crossRoad == _laneType)
     {
+        Line l1 = _leastSquares(_left_1);
+        Line l2 = _leastSquares(_right_1);
+        _drawLine(l1, _left_1.front().point.y);
+        _drawLine(l2, _right_1.front().point.y);
+
         COORD bottom = _left_1.back().point.y < _right_1.back().point.y ? _left_1.back().point.y : _right_1.back().point.y;
         do{
             _left_2.clear();
@@ -151,7 +88,7 @@ BOOL LaneAnalyzer::findPath()
         _right_2.push_back(_right_1.back());  
         if(leftTurn ==_laneType)
         {
-            _dfs(_left_1.back(), _left_2, LEFT);
+            _dfs(_left_1.back(), _left_2, LEFT);            //extend _left and _right in curved lane if successful
             _dfs(_right_1.back(), _right_2, LEFT);
         }
         else if(rightTurn ==_laneType)
@@ -180,8 +117,9 @@ BOOL LaneAnalyzer::findPath()
                 pShort++;
             else
                 pLong++;
-        } //NOTE: 假设 longerPath_1.back().point.y < shorterPath_1.back().point.y
+        } //NOTE: Assume that longerPath_1.back().point.y < shorterPath_1.back().point.y
 
+        //find midpoint on curved lane
         INT8 coeff = rightTurn == _laneType ? 1 : -1;
         while((pShort->point.x - pLong->point.x) * coeff > 0)
         {
@@ -207,24 +145,6 @@ BOOL LaneAnalyzer::findPath()
         }
     }
 
-    // _dfs(_left.back(), _left, LEFT);       //extend _left and _right in curved lane if successful
-    // _dfs(_right.back(), _right, LEFT);
-
-/*
-    //find midpoint on curved lane
-    Point lastPoint = (_left.size()<_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);
-    Point source    = (_left.size()>_right.size()) ? (_left.begin()+leftInflectionOffset) : (_right.begin()+rightInflectionOffset);;
-
-    for(; source < longerPath.end() && (*source).x && (*source).y; source++)
-    {
-        _mid.push_back((*source + *lastPoint) / 2);
-
-        if(lastPoint + 2 < shorterPath.end())
-            lastPoint = _closestPoint(source,{lastPoint,lastPoint+1,lastPoint+2});
-        else
-            break;
-    }
-*/
     for(auto p : _left_1)
         _result->write(p.point.x, p.point.y, 'L');
 
@@ -240,8 +160,6 @@ BOOL LaneAnalyzer::findPath()
     for(auto p : _mid)
         _result->write(p.point.x, p.point.y, 'M');
 
-    // _result->write(_left_1.at(leftInflectionOffset-1).point.x,_left_1.at(leftInflectionOffset-1).point.y,'X');
-    // _result->write(_right_1.at(rightInflectionOffset-1).point.x,_right_1.at(rightInflectionOffset-1).point.y,'Y');
     return true;
 }
 
@@ -298,7 +216,7 @@ void LaneAnalyzer::_dfs(const Vec4D& root, Path& edge, const Vec2D& direction)
                 if(_bInImage(p) && _img->read(p.x,p.y) > _img->threshold() &&/* p.y >_img->size().y/2 &&*/ _bOnEdge(p))
                 {
                     p4D.point = p;
-                    p4D.direction = _foo(p);
+                    p4D.direction = _grad(p);
                     if(abs(p4D.direction.x - rootTemp.direction.x)<= 3
                     && abs(p4D.direction.y - rootTemp.direction.y)<= 3)
                     {
@@ -323,45 +241,13 @@ void LaneAnalyzer::_dfs(const Vec4D& root, Path& edge, const Vec2D& direction)
 
 BOOL LaneAnalyzer::_findRoot(COORD bottom, Path& leftEdge, Path& rightEdge)
 {
-    /*
-    _left.clear();
-    _right.clear();
-    for (COORD x = 1; x < _img->size().x-1; x++)
-    {
-        BYTE val = _img->read(x,bottom);
-        if (val > _img->threshold())
-        {
-            if (   _img->read(x+1,bottom) >= _img->threshold() 
-                && _img->read(x-1,bottom) < _img->threshold())
-            {
-                Vec2D p(x, bottom);
-                Vec4D p4D = {p, _foo(p)};
-                _left.push_back(p4D);
-            }
-            else if (  _img->read(x-1,bottom) >= _img->threshold() 
-                    && _img->read(x+1,bottom) < _img->threshold())
-            {
-                Vec2D p(x, bottom);
-                Vec4D p4D = {p, _foo(p)};
-                _right.push_back(p4D);
-            }
-        }
-    }
-    //TODO: verify by k, crossroads
-
-    if(_left.size() && _right.size())
-        return true;
-    size_t ls = _left.size();
-    size_t rs = _right.size();
-    return false;
-    */
     Path root;
     for(COORD x = 2; x < _img->size().x-2; x++)
     {
         Vec2D p = Vec2D(x,bottom);
         if(_bOnEdge(Vec2D(x,bottom)) && _img->read(x,bottom) > _img->threshold())
         {
-            root.push_back({p, _foo(p)});
+            root.push_back({p, _grad(p)});
             x+=5;
         }
     }
@@ -398,36 +284,13 @@ BOOL LaneAnalyzer::_findRoot(COORD bottom, Path& leftEdge, Path& rightEdge)
 
 BOOL LaneAnalyzer::_bOnEdge(const Vec2D &p)
 {
-	UINT8 counter = 0;
-	if (_img->size().x-3 == p.x || _img->size().x-2 == p.x)     //右边沿
-	{
-		// counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-        //         + (_img->read(p.x,  p.y-1) > _img->threshold())
-        //         + (_img->read(p.x-1,p.y  ) > _img->threshold())
-        //         + (_img->read(p.x-1,p.y+1) > _img->threshold())
-        //         + (_img->read(p.x-1,p.y-1) > _img->threshold());
-                //上+下+左+左上+左下
-		//if (counter <= 3)
-			return true;
-	}
-	else if (2 == p.x || 1 == p.x)		//左边沿
-	{
-        // counter = (_img->read(p.x,  p.y+1) > _img->threshold())
-        //         + (_img->read(p.x,  p.y-1) > _img->threshold())
-        //         + (_img->read(p.x+1,p.y  ) > _img->threshold())
-        //         + (_img->read(p.x+1,p.y+1) > _img->threshold())
-        //         + (_img->read(p.x+1,p.y-1) > _img->threshold());
-                //上+下+右+右上+右下
-		//if (counter <= 3)
-			return true;
-	}
-    else if (_img->size().y-3 == p.y || _img->size().y-2 == p.y)
-    {
+	if (_img->size().x-3 == p.x || _img->size().x-2 == p.x ||   //右边沿
+           2 == p.x || 1 == p.x ||	                            //左边沿   
+	    _img->size().y-3 == p.y || _img->size().y-2 == p.y)     //下边沿
         return true;
-    }
 	else
 	{
-        INT16 threshold;
+        BYTE counter = 0;
         INT16 val = 12;
 		counter = (_img->read(p.x,  p.y+1) < _img->read(p.x, p.y) - val )
                 + (_img->read(p.x,  p.y-1) < _img->read(p.x, p.y) - val )
@@ -463,7 +326,7 @@ LaneAnalyzer::Point LaneAnalyzer::_closestPoint(const Point& source, std::initia
     return tempPoint;
 }
 
-Vec2D LaneAnalyzer::_foo(Vec2D p)
+Vec2D LaneAnalyzer::_grad(Vec2D p)
 {
     if(p.x<2 || p.x>_img->size().x-3 || p.y<2 || p.y>_img->size().y-3)
 	{
@@ -504,6 +367,45 @@ COORD LaneAnalyzer::_variance(const Path& edge)
         varianceY += (p->direction.y - meanY) * (p->direction.y - meanY);
     }
     return (varianceX + varianceY) / (edge.end()-3-begin);
+}
+
+Line LaneAnalyzer::_leastSquares(const Path& edge)
+{
+    float a, b, temp;
+    float A = 0.0;
+	float B = 0.0;
+	float C = 0.0;
+	float D = 0.0;
+	float E = 0.0;
+	float F = 0.0;
+    for(auto p : edge)
+    {
+        A += p.point.x * p.point.x;
+        B += p.point.x;
+        C += p.point.x * p.point.y;
+        D += p.point.y;
+    }
+	if( temp = (edge.size()*A - B*B) )// 判断分母不为0
+	{
+		a = (edge.size()*C - B*D) / temp;
+		b = (A*D - B*C) / temp;
+	}
+	else
+	{
+		a = 1;
+		b = 0;
+	}
+    return {a,b};
+}
+
+void LaneAnalyzer::_drawLine(const Line& line, COORD yMin)
+{
+    for(COORD x = 0; x < _result->size().x; x++)
+    {
+        float y = line.a * x + line.b;
+        if(yMin <= y && y < _img->size().y)
+            _result->write(x, y, '$');
+    }
 }
 
 const Vec2D LaneAnalyzer::UP    = Vec2D( 0,-1);

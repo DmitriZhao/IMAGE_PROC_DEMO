@@ -28,8 +28,10 @@ private:
 	Path _right_2;
 	Path _mid;
 	LaneType _laneType;
+	Line _leastSquares(const Path& edge);
+	void _drawLine(const Line& line, COORD yMin);
 	COORD _variance(const Path& edge);
-	Vec2D _foo(Vec2D p);	//test
+	Vec2D _grad(Vec2D p);
     BOOL _bInImage(const Vec2D& p)    {return p.x>=2 && p.x<_img->size().x-2 && p.y>=2 && p.y<_img->size().y-2;}
 	BOOL _bOnEdge (const Vec2D& p);
     BOOL _findRoot (COORD bottom, Path& leftEdge, Path& rightEdge);
