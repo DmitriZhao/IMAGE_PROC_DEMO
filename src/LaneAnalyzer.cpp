@@ -93,7 +93,7 @@ BOOL LaneAnalyzer::findPath()
         }
         while((_left_2.size()<5 || _right_2.size()<5) && bottom >_img->size().y/3);
 
-        if(bottom < _img->size().y/3)
+        if(bottom <= _img->size().y/3 + 3)
         {
             _left_2.clear();
             _right_2.clear();
@@ -102,7 +102,7 @@ BOOL LaneAnalyzer::findPath()
         Line l2 = _leastSquares(_right_1);
         if(_left_1.begin()->point.y > _img->size().y-10 || _right_1.begin()->point.y > _img->size().y-10 )
         {
-            if(bottom < _img->size().y/3)     //_2缺失，向上延长
+            if(bottom <= _img->size().y/3 + 3)     //_2缺失，向上延长
             {
                 _drawLine(l1, _left_1, _img->size().y/2, _left_1.rbegin()->point.y);
                 _drawLine(l2, _right_1, _img->size().y/2, _right_1.rbegin()->point.y);
@@ -116,7 +116,7 @@ BOOL LaneAnalyzer::findPath()
         else                    //下缺失，向下延长
         {
             _drawLine(l1, _left_2, _left_1.begin()->point.y, _img->size().y-3);
-            _drawLine(l2, _left_2, _right_1.begin()->point.y, _img->size().y-3);
+            _drawLine(l2, _right_2, _right_1.begin()->point.y, _img->size().y-3);
         }
         if(_left_2.empty() || _left_1.begin()->point.y > _left_2.begin()->point.y)
         {
@@ -484,7 +484,7 @@ void LaneAnalyzer::_drawLine(const Line& line, Path& edge, COORD yMin, COORD yMa
 {
     if(yMax - yMin < 5)
         return;
-    for(COORD y = yMin + 1; y < yMax; y++)
+    for(COORD y = yMax -1; y > yMin; y--)
     {
         float x = line.a * y + line.b;
         edge.push_back({{COORD(x),COORD(y)},{0,0}});
