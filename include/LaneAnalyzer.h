@@ -34,6 +34,7 @@ private:
 	Vec2D _grad(Vec2D p);
     BOOL _bInImage(const Vec2D& p)    {return p.x>=2 && p.x<_img->size().x-2 && p.y>=2 && p.y<_img->size().y-2;}
 	BOOL _bOnEdge (const Vec2D& p);
+	COORD _countBlackPoint(const Vec2D& p);
     BOOL _findRoot (COORD bottom, Path& leftEdge, Path& rightEdge);
     void _dfs(const Vec4D& root, Path& edge, const Vec2D& direction);
 	Point _closestPoint(const Point& source, std::initializer_list<Point> init_list);

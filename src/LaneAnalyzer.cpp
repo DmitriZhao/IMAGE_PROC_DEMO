@@ -58,7 +58,9 @@ BOOL LaneAnalyzer::findPath()
         rightBoundaryCount++;
     }
 
-    if(_variance(_left_1) + _variance(_right_1) > 6 || leftBoundaryCount >=5 || rightBoundaryCount >=5)
+    if(_variance(_left_1) + _variance(_right_1) > 6 
+    || leftBoundaryCount >=5 || rightBoundaryCount >= 5
+    || _countBlackPoint(_left_1.rbegin()->point) + _countBlackPoint(_right_1.rbegin()->point) > 0x0F)
     {
         if(abs(_left_1.rbegin()->direction.x + _left_1.rbegin()->direction.y)
          + abs(_right_1.rbegin()->direction.x + _right_1.rbegin()->direction.y) > 10)
@@ -363,6 +365,24 @@ BOOL LaneAnalyzer::_findRoot(COORD bottom, Path& leftEdge, Path& rightEdge)
     return false;
 }
 
+COORD LaneAnalyzer::_countBlackPoint(const Vec2D& p)
+{
+    COORD counter = 0;
+    for(SIGNED_COORD x = -2; x<= 2; x++)
+        for(SIGNED_COORD y = -1; y>= -3; y--)
+        {
+            Vec2D current(p.x+x, p.y+y);
+            if(_bInImage(p))
+            {
+                if(_img->read(current.x, current.y) < _img->threshold()+10)   
+                    counter++;
+            }
+            else
+                return 0x0F;
+        }
+    return counter;
+}
+
 BOOL LaneAnalyzer::_bOnEdge(const Vec2D &p)
 {
 	if (_img->size().x-3 == p.x || _img->size().x-2 == p.x ||   //右边沿
@@ -411,7 +431,7 @@ Vec2D LaneAnalyzer::_grad(Vec2D p)
 {
     if(p.x<2 || p.x>_img->size().x-3 || p.y<2 || p.y>_img->size().y-3)
 	{
-		std::cerr << "foo(): out_of_range error at "<< p.x << ", "<< p.y <<std::endl;
+		std::cerr << "LaneAnalyzer::_grad(): out_of_range error at "<< p.x << ", "<< p.y <<std::endl;
 		return 0;
 	}
     SIGNED_COORD horizontal = 0, vertical = 0;
