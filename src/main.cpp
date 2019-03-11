@@ -7,9 +7,9 @@ using namespace std;
 
 int main(int argc, char** argv)
 {
-    ImageReader imgReader; 
+    ImageReader imgReader;
     imgReader.init(argv[1]);
-    
+
     ImageAnalyzer imgAnalyzer = ImageAnalyzer(imgReader.getImage());
     imgAnalyzer.evalThreshold(HEIGHT/2);
 

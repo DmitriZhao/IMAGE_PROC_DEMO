@@ -19,16 +19,16 @@ LaneAnalyzer::LaneAnalyzer(GreyScaleImage::Ptr img)
 BOOL LaneAnalyzer::findPath()
 {
     // for(COORD y=2; y<_img->size().y; y++)
-	// {
-	// 	for(COORD x = 0; x < _img->size().x; x++)
-	// 	{
-	// 		if(_bOnEdge(Vec2D(x,y)))
-	// 			std::cout<<'*';
-	// 		else
-	// 			std::cout<<' ';
-	// 	}
-	// 	std::cout << std::endl;
-	// }
+    // {
+    // 	for(COORD x = 0; x < _img->size().x; x++)
+    // 	{
+    // 		if(_bOnEdge(Vec2D(x,y)))
+    // 			std::cout<<'*';
+    // 		else
+    // 			std::cout<<' ';
+    // 	}
+    // 	std::cout << std::endl;
+    // }
 
     COORD bottom = _img->size().y;
     do{
@@ -249,15 +249,15 @@ BOOL LaneAnalyzer::findPath()
 void LaneAnalyzer::show()
 {
     for (int y = 0; y < _img->size().y; y++)
-	{
-		for (int x = 0; x < _img->size().x; x++)
-		{
+    {
+        for (int x = 0; x < _img->size().x; x++)
+        {
             // if(!_result->read(x,y))
             //     std::cout<<'?';
-			std::cout << _result->read(x,y);
-		}
-		std::cout << std::endl;
-	}
+            std::cout << _result->read(x,y);
+        }
+        std::cout << std::endl;
+    }
     std::cout << std::endl;
 }
 
@@ -282,7 +282,7 @@ void LaneAnalyzer::_dfs(const Vec4D& root, Path& edge, const Vec2D& direction)
     Vec4D rootTemp = root;
     std::vector<SIGNED_COORD> horizontalSearchingDistanceQueue = { 0,1,-1,2,-2,3,-3 };
     if(direction.x)
-        horizontalSearchingDistanceQueue =  { 0,1,-1,2,-2 };
+        horizontalSearchingDistanceQueue =  { 0,-1,-2,1,2 };
     UINT8 counter = 0;
     BOOL  continuous = 1;
     while(continuous)
@@ -385,15 +385,15 @@ COORD LaneAnalyzer::_countBlackPoint(const Vec2D& p)
 
 BOOL LaneAnalyzer::_bOnEdge(const Vec2D &p)
 {
-	if (_img->size().x-3 == p.x || _img->size().x-2 == p.x ||   //右边沿
+    if (_img->size().x-3 == p.x || _img->size().x-2 == p.x ||   //右边沿
            2 == p.x || 1 == p.x ||	                            //左边沿   
-	    _img->size().y-2 == p.y || _img->size().y-1 == p.y)     //下边沿
+        _img->size().y-2 == p.y || _img->size().y-1 == p.y)     //下边沿
         return true;
-	else
-	{
+    else
+    {
         BYTE counter = 0;
         INT16 val = 12;
-		counter = (_img->read(p.x,  p.y+1) < _img->read(p.x, p.y) - val )
+        counter = (_img->read(p.x,  p.y+1) < _img->read(p.x, p.y) - val )
                 + (_img->read(p.x,  p.y-1) < _img->read(p.x, p.y) - val )
                 + (_img->read(p.x+1,p.y  ) < _img->read(p.x, p.y) - val )
                 + (_img->read(p.x+1,p.y+1) < _img->read(p.x, p.y) - val )
@@ -401,13 +401,13 @@ BOOL LaneAnalyzer::_bOnEdge(const Vec2D &p)
                 + (_img->read(p.x-1,p.y  ) < _img->read(p.x, p.y) - val )
                 + (_img->read(p.x-1,p.y+1) < _img->read(p.x, p.y) - val )
                 + (_img->read(p.x-1,p.y-1) < _img->read(p.x, p.y) - val );
-		if (counter >= 2)
-			return true;
+        if (counter >= 2)
+            return true;
         // BYTE grad = _analyzer->applyOperator(p.x, p.y, ImageAnalyzer::SOBEL);
         //if (grad > 40)
         //   return true;
-	}
-	return false;
+    }
+    return false;
 }
 
 LaneAnalyzer::Point LaneAnalyzer::_closestPoint(const Point& source, std::initializer_list<Point> init_list)
@@ -430,21 +430,21 @@ LaneAnalyzer::Point LaneAnalyzer::_closestPoint(const Point& source, std::initia
 Vec2D LaneAnalyzer::_grad(Vec2D p)
 {
     if(p.x<2 || p.x>_img->size().x-3 || p.y<2 || p.y>_img->size().y-3)
-	{
-		std::cerr << "LaneAnalyzer::_grad(): out_of_range error at "<< p.x << ", "<< p.y <<std::endl;
-		return 0;
-	}
+    {
+        std::cerr << "LaneAnalyzer::_grad(): out_of_range error at "<< p.x << ", "<< p.y <<std::endl;
+        return 0;
+    }
     SIGNED_COORD horizontal = 0, vertical = 0;
     SIGNED_COORD biao[5]={-1,-1,0,1,1};
-	for(SIGNED_COORD i=-2; i<=2; i++)
-	{
-		for(SIGNED_COORD j=-2; j<=2; j++)
-		{
-			horizontal += (_img->read(p.x+i, p.y+j) < _img->read(p.x, p.y)-12) * (-biao[i+2]);
-			vertical += (_img->read(p.x+i, p.y+j) > _img->read(p.x, p.y)-12) * biao[j+2];
-		}
-	}
-	return Vec2D(horizontal, vertical);
+    for(SIGNED_COORD i=-2; i<=2; i++)
+    {
+        for(SIGNED_COORD j=-2; j<=2; j++)
+        {
+            horizontal += (_img->read(p.x+i, p.y+j) < _img->read(p.x, p.y)-12) * (-biao[i+2]);
+            vertical += (_img->read(p.x+i, p.y+j) > _img->read(p.x, p.y)-12) * biao[j+2];
+        }
+    }
+    return Vec2D(horizontal, vertical);
 }
 
 COORD LaneAnalyzer::_variance(const Path& edge)
@@ -475,11 +475,11 @@ Line LaneAnalyzer::_leastSquares(const Path& edge)
     COORD nDropPoint = 4;
     float a, b, temp;
     float A = 0.0;
-	float B = 0.0;
-	float C = 0.0;
-	float D = 0.0;
-	float E = 0.0;
-	float F = 0.0;
+    float B = 0.0;
+    float C = 0.0;
+    float D = 0.0;
+    float E = 0.0;
+    float F = 0.0;
     for(Point p = edge.begin(); p < edge.end() - nDropPoint; p++)
     {
         A += p->point.y * p->point.y;
@@ -487,16 +487,16 @@ Line LaneAnalyzer::_leastSquares(const Path& edge)
         C += p->point.x * p->point.y;
         D += p->point.x;
     }
-	if( 0 != (temp = ((edge.size() - nDropPoint)*A - B*B)))// 判断分母不为0
-	{
-		a = ((edge.size() - nDropPoint)*C - B*D) / temp;
-		b = (A*D - B*C) / temp;
-	}
-	else
-	{
-		a = 1;
-		b = 0;
-	}
+    if( 0 != (temp = ((edge.size() - nDropPoint)*A - B*B)))// 判断分母不为0
+    {
+        a = ((edge.size() - nDropPoint)*C - B*D) / temp;
+        b = (A*D - B*C) / temp;
+    }
+    else
+    {
+        a = 1;
+        b = 0;
+    }
     return {a,b};
 }
 

@@ -22,40 +22,40 @@ public:
 
 inline GreyScaleImage::GreyScaleImage(BmpReader::Ptr bmpReader) : ImageBase<BYTE>(Size(bmpReader->width(),bmpReader->height()), BYTE(0xFF))
 {
-	Size size(bmpReader->width(),bmpReader->height());
+    Size size(bmpReader->width(),bmpReader->height());
 
-	for (COORD y = 0; y < size.y; y++)
-		for (COORD x = 0; x < size.x; x++)
-		{
-			Pixel px = bmpReader->readPixel(x,y);	
-			write(x, y, (px.r + px.g + px.b) / 3);
-		}
+    for (COORD y = 0; y < size.y; y++)
+        for (COORD x = 0; x < size.x; x++)
+        {
+            Pixel px = bmpReader->readPixel(x,y);	
+            write(x, y, (px.r + px.g + px.b) / 3);
+        }
 }
-  
+
 inline void GreyScaleImage::show(ShowMethod method)
 {
-	for (COORD y = 0; y < size().y; y++)
-	{
-		for (COORD x = 0; x < size().x; x++)
-		{
-			BYTE byte = read(x, y);
-			if(byThreshold == method)
-			{
-				if (byte <= _threshold)
-					std::cout << ' ';
-				else
-					std::cout << '*';
-			}
-			else if(byHex == method)
-			{
-				byte /= 0x10;
-				std::cout << std::hex << (int)byte;
-			}
-				//std::cout<<std::hex<<(INT8)byte<<' ';
-		}
-		std::cout << std::endl;
-	}
-	std::cout << std::endl;
+    for (COORD y = 0; y < size().y; y++)
+    {
+        for (COORD x = 0; x < size().x; x++)
+        {
+            BYTE byte = read(x, y);
+            if(byThreshold == method)
+            {
+                if (byte <= _threshold)
+                    std::cout << ' ';
+                else
+                    std::cout << '*';
+            }
+            else if(byHex == method)
+            {
+                byte /= 0x10;
+                std::cout << std::hex << (int)byte;
+            }
+                //std::cout<<std::hex<<(INT8)byte<<' ';
+        }
+        std::cout << std::endl;
+    }
+    std::cout << std::endl;
 }
 
 #endif
