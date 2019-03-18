@@ -23,7 +23,7 @@ typedef unsigned int        UINT32, *PUINT32;
 #endif
 
 #if defined MT9V032
-    const COORD     WIDTH   = 188;
+    const COORD     WIDTH   = 186;
     const COORD     HEIGHT  = 120;
 #endif
 
@@ -104,6 +104,6 @@ typedef struct Line
 }Line;
 
 enum ShowMethod {byHex, byThreshold};
-enum LaneType {crossRoad, leftTurn, rightTurn};
+enum LaneType {crossRoad, leftTurn, rightTurn,normal,circle};  //add more conditions
 
 #endif

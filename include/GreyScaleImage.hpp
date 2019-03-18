@@ -41,7 +41,7 @@ inline void GreyScaleImage::show(ShowMethod method)
             BYTE byte = read(x, y);
             if(byThreshold == method)
             {
-                if (byte <= _threshold)
+                if (byte <= _threshold+10)
                     std::cout << ' ';
                 else
                     std::cout << '*';

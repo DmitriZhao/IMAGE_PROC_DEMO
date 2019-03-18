@@ -12,7 +12,7 @@ LaneAnalyzer::LaneAnalyzer(GreyScaleImage::Ptr img)
     for(COORD x = 0; x < _img->size().x; x++)
     {
         for(COORD y = 0; y < _img->size().y; y++)
-            _result->write(x,y,_img->read(x,y)>_img->threshold()?' ':'*');
+            _result->write(x,y,_img->read(x,y)>(_img->threshold()+24)?' ':'*');
     }
 }
 
@@ -45,6 +45,12 @@ BOOL LaneAnalyzer::findPath()
     }
     while(_left_1.size()<5 || _right_1.size()<5);
 
+    if(_left_1.size()==0 || _right_1.size()==0)
+    {
+        std::cout<<"Error\n";
+        return false;
+    }
+
     //determine lane type
     COORD leftBoundaryCount = 0, rightBoundaryCount = 0;
     for(auto p : _left_1)
@@ -58,19 +64,37 @@ BOOL LaneAnalyzer::findPath()
         rightBoundaryCount++;
     }
 
-    if(_variance(_left_1) + _variance(_right_1) > 6 
-    || leftBoundaryCount >=5 || rightBoundaryCount >= 5
-    || _countBlackPoint(_left_1.rbegin()->point) + _countBlackPoint(_right_1.rbegin()->point) > 0x0F)
-    {
-        if(abs(_left_1.rbegin()->direction.x + _left_1.rbegin()->direction.y)
-         + abs(_right_1.rbegin()->direction.x + _right_1.rbegin()->direction.y) > 10)
-            _laneType = rightTurn;
-        else
-            _laneType = leftTurn;
-    }
-    else
-        _laneType = crossRoad;
+    //std::cout<<(uint32_t)_countBlackPoint(_left_1.rbegin()->point)<<"  !  "<< (uint32_t)_countBlackPoint(_right_1.rbegin()->point)<<std::endl;
+
+    // if(leftBoundaryCount >=5 || rightBoundaryCount >= 5             //delete variance
+    // || _countBlackPoint(_left_1.rbegin()->point) + _countBlackPoint(_right_1.rbegin()->point) > 0x0A)
+    // {
+    //     if( _countBlackPoint(_left_1.rbegin()->point) > 0x06 && _countBlackPoint(_right_1.rbegin()->point) > 0x06)
+    //         _laneType = normal;
+    //     else
+    //     if(abs(_left_1.rbegin()->direction.x + _left_1.rbegin()->direction.y)
+    //      + abs(_right_1.rbegin()->direction.x + _right_1.rbegin()->direction.y) > 10)
+    //         _laneType = rightTurn;
+    //     else
+    //         _laneType = leftTurn;
+    // }
+    // else
+    //     _laneType = crossRoad;
     
+    COORD lbkpoint = _countBlackPoint(_left_1.rbegin()->point), rbkpoint = _countBlackPoint(_right_1.rbegin()->point);
+    std::cout<<(uint32_t)lbkpoint<<"  .  "<<(uint32_t)rbkpoint<<std::endl;
+    if(_left_1.rbegin()->point.y < _img->size().y/2 && _right_1.rbegin()->point.y < _img->size().y/2)
+        _laneType = normal;
+    else if(lbkpoint <= 0x03 && rbkpoint <= 0x03 )
+        _laneType = crossRoad;
+    else 
+    {
+        if(lbkpoint <= 0x04)    _laneType = leftTurn;
+        else if(rbkpoint <= 0x04)   _laneType = rightTurn;
+        else    _laneType = normal;
+    }
+
+
     if(crossRoad == _laneType)
     {
         COORD bottom = _left_1.rbegin()->point.y < _right_1.rbegin()->point.y ? _left_1.rbegin()->point.y : _right_1.rbegin()->point.y;
@@ -163,6 +187,23 @@ BOOL LaneAnalyzer::findPath()
                 if(pRight == _right_2.end())
                     pRight = _right_1.begin();
             }
+        }
+    }
+    else if(normal == _laneType)
+    {
+        Point pleft = _left_1.begin(), pright = _right_1.begin();
+        while(pleft < _left_1.end()-1 && pright < _right_1.end()-1)
+        {
+            if(pleft->point.y == pright->point.y)
+            {
+                _mid.push_back({(pleft->point+pright->point)/2, Vec2D(0,0)});
+                pleft++;
+                pright++;
+            }
+            else if(pleft->point.y > pright->point.y)
+                pleft++;
+            else
+                pright++;
         }
     }
     else
@@ -274,6 +315,12 @@ void LaneAnalyzer::showLaneType()
         case crossRoad:
             std::cout << "Cross Road\n";
             break;
+        case normal:
+            std::cout << "Normal\n";
+            break;
+        case circle:
+            std::cout << "Circle\n";
+            break;
     }
 }
 
@@ -374,7 +421,7 @@ COORD LaneAnalyzer::_countBlackPoint(const Vec2D& p)
             Vec2D current(p.x+x, p.y+y);
             if(_bInImage(p))
             {
-                if(_img->read(current.x, current.y) < _img->threshold()+10)   
+                if(_img->read(current.x, current.y) < _img->threshold()+24)   
                     counter++;
             }
             else

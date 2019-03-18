@@ -18,8 +18,8 @@ int main(int argc, char** argv)
     laneAnalyzer.show();
     laneAnalyzer.showLaneType();
 
-    //cout << "Press any key to exit...";
-    //cin.get();
+    cout << "Press any key to continue...";
+    cin.get();
 
     return 0;
 }
