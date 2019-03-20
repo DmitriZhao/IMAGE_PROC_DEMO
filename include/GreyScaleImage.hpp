@@ -12,6 +12,7 @@ private:
     BYTE    _threshold = 0x7f;
 public:
     GreyScaleImage(BmpReader::Ptr bmpReader);
+    GreyScaleImage(const Size& size, const BYTE* imageBuffer) : ImageBase<BYTE>(size, imageBuffer){};
     GreyScaleImage(const Size& size, BYTE defaultVal) : ImageBase<BYTE>(size, defaultVal){};
     typedef  std::shared_ptr<GreyScaleImage>    Ptr;
     Ptr      getPtr()                           {return shared_from_this();}

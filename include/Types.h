@@ -32,7 +32,7 @@ typedef struct Size
 {
     COORD   x;
     COORD   y;
-    ELEMENT  area()  {return x * y;}
+    ELEMENT  area() const {return x * y;}
     Size(COORD x = 0, COORD y = 0)
     {
         this->x = x;
