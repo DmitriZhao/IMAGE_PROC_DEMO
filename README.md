@@ -18,7 +18,7 @@ An image processing demo for NXP smart car competition (under construction)
 
     # in project root
 
-    ./bin/Image_Proc_Demo "./res/01.BMP"       # or Image_Proc_Demo.exe in Windows
+    ./bin/Image_Proc_Demo "./res/new/01.BMP"       # or Image_Proc_Demo.exe in Windows
 
 ## Autorun
 
